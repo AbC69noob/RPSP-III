@@ -1,0 +1,13 @@
+/* SubjectsTab.css */
+
+.subjects-modal-content {
+    max-width: 600px;
+}
+
+.delete-modal-content {
+    max-width: 400px;
+}
+
+.assign-modal-content {
+    max-width: 400px;
+}
