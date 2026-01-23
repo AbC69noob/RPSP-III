@@ -303,7 +303,7 @@ const TeachersTab = () => {
 
     return (
         <div className="card">
-            <h3 className="text-lg font-bold text-gray-800 mb-6">Teacher Assignment</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-6">Course allocation</h3>
 
             {/* Filter Section */}
             <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm mb-6">
