@@ -31,7 +31,17 @@ public class Subjects {
     @Column(name = "active")
     private Boolean active = true;
 
+    private String batch;
+
     /* Getters and Setters */
+
+    public String getBatch() {
+        return batch;
+    }
+
+    public void setBatch(String batch) {
+        this.batch = batch;
+    }
 
     public Boolean getActive() {
         return active;

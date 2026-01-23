@@ -62,6 +62,7 @@ public class SubjectsController {
         subject.setPassMarks(request.getPassMarks());
         subject.setSemester(request.getSemester());
         subject.setProgram(program);
+        subject.setBatch(request.getBatch());
         subject.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
 
         Subjects savedSubject = repo.save(subject);
@@ -76,7 +77,7 @@ public class SubjectsController {
             ts.setSubject(savedSubject);
             ts.setStudentProgram(program);
             ts.setStudentSemester(request.getSemester());
-            // Batch is not in request, leaving null or handle if needed
+            ts.setStudentBatch(request.getBatch());
 
             teacherSubjectsRepo.save(ts);
         }
@@ -111,6 +112,24 @@ public class SubjectsController {
         teacherSubjectsRepo.save(assignment);
 
         return ResponseEntity.ok("Teacher assigned successfully");
+    }
+
+    // REMOVE TEACHER ASSIGNMENT
+    @DeleteMapping("/{id}/teacher")
+    @PreAuthorize("hasAnyAuthority('admin')")
+    @Transactional
+    public ResponseEntity<?> removeTeacher(@PathVariable Long id) {
+        Subjects subject = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Subject not found"));
+
+        Teacher_subjects assignment = teacherSubjectsRepo.findBySubjectId(id)
+                .orElse(null);
+
+        if (assignment != null) {
+            teacherSubjectsRepo.delete(assignment);
+        }
+
+        return ResponseEntity.ok("Teacher unassigned successfully");
     }
 
     // SOFT DELETE SUBJECT

@@ -48,10 +48,10 @@ const DashboardLayout = () => {
               <span className="link-text">Faculties</span>
             </NavLink>
             
-            {/* <NavLink to="teachers" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+            <NavLink to="teachers" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
               <UserCog size={20} />
-              <span className="link-text">Teachers</span>
-            </NavLink> */}
+              <span className="link-text">Course allocation</span>
+            </NavLink> 
             <NavLink to="marks" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
               <ClipboardCheck size={20} />
               <span className="link-text">Marks</span>

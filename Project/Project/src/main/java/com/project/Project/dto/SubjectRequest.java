@@ -8,6 +8,7 @@ public class SubjectRequest {
     private Integer semester;
     private Long programId;
     private Long teacherId;
+    private String batch;
 
     // Getters and Setters
     public String getCode() {
@@ -64,5 +65,13 @@ public class SubjectRequest {
 
     public void setTeacherId(Long teacherId) {
         this.teacherId = teacherId;
+    }
+
+    public String getBatch() {
+        return batch;
+    }
+
+    public void setBatch(String batch) {
+        this.batch = batch;
     }
 }

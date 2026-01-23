@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import './UsersTab.css';
 import { Trash2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const UsersTab = () => {
     const [users, setUsers] = useState([]);
@@ -76,9 +77,10 @@ const UsersTab = () => {
             setUsers(users.filter(u => u.id !== userToDelete));
             setShowDeleteModal(false);
             setUserToDelete(null);
+            toast.success('User deleted successfully');
         } catch (error) {
             console.error('Failed to delete user:', error);
-            alert('Failed to delete user');
+            toast.error('Failed to delete user');
         } finally {
             setDeleteLoading(false);
         }
@@ -132,13 +134,29 @@ const UsersTab = () => {
             // For admin role, only username, email, password, role are sent
 
             await api.post('/users/create', payload);
-            alert('User created successfully!');
-            setShowModal(false);
-            setFormData(initialFormState);
+            toast.success('User created successfully!');
+            
+            // Keep program, semester, batch - only clear user-specific fields
+            setFormData({
+                ...formData,
+                username: '',
+                email: '',
+                password: '',
+                name: '',
+                gender: 'Male',
+                dob: '',
+                permanentAddress: '',
+                temporaryAddress: '',
+                rollNo: '',
+                employeeId: '',
+                qualifications: '',
+                contactNo: ''
+            });
+            
             fetchUsers();
         } catch (error) {
             console.error('Failed to create user:', error);
-            alert('Failed to create user. Please check console for details.');
+            toast.error('Failed to create user. Please try again.');
         }
     };
 
