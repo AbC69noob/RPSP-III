@@ -21,45 +21,71 @@ const MarksTab = () => {
     const [selectedTerm, setSelectedTerm] = useState('');
 
     const [filtersApplied, setFiltersApplied] = useState(false);
+    const [batches, setBatches] = useState([]);
+    const [loadingSubjects, setLoadingSubjects] = useState(false);
 
     // Bulk Entry State: { [studentId]: { obtainedMarks: '', remark: '', id: null } }
     const [marksEntry, setMarksEntry] = useState({});
 
-    // Generate batch years (current year and past 10 years)
-    const generateBatchYears = () => {
-        const currentYear = new Date().getFullYear();
-        const years = [];
-        for (let i = 0; i <= 10; i++) {
-            years.push((currentYear - i).toString());
-        }
-        return years;
-    };
-
-    const batchYears = generateBatchYears();
     const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
     useEffect(() => {
         fetchInitialData();
     }, []);
 
+    // Dynamic Subject Filtering - triggered when batch, program, or semester changes
+    useEffect(() => {
+        if (selectedBatch && selectedProgram && selectedSemester) {
+            fetchFilteredSubjects();
+        } else {
+            setSubjects([]);
+            setSelectedSubject('');
+        }
+    }, [selectedBatch, selectedProgram, selectedSemester]);
+
+    const fetchFilteredSubjects = async () => {
+        try {
+            setLoadingSubjects(true);
+            console.log('Fetching subjects for batch:', selectedBatch, 'program:', selectedProgram, 'semester:', selectedSemester);
+            const response = await api.get('/subjects/filter', {
+                params: {
+                    batch: selectedBatch,
+                    programId: Number(selectedProgram),
+                    semester: Number(selectedSemester)
+                }
+            });
+            console.log('Fetched subjects:', response.data);
+            setSubjects(response.data);
+            // If the currently selected subject is not in the new list, clear it
+            if (selectedSubject && !response.data.find(s => s.id === Number(selectedSubject))) {
+                setSelectedSubject('');
+            }
+        } catch (error) {
+            console.error('Failed to fetch filtered subjects:', error);
+            setSubjects([]);
+        } finally {
+            setLoadingSubjects(false);
+        }
+    };
+
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const [marksRes, studentsRes, subjectsRes, termsRes, programsRes, profileRes] = await Promise.all([
+            const [marksRes, studentsRes, termsRes, programsRes, profileRes, batchesRes] = await Promise.all([
                 api.get('/marks'),
                 api.get('/students'),
-                api.get('/subjects'),
                 api.get('/terms'),
                 api.get('/programs'),
-                api.get('/profile')
+                api.get('/profile'),
+                api.get('/students/batches')
             ]);
             setMarks(marksRes.data);
             setAllStudents(studentsRes.data);
             setStudents(studentsRes.data);
-            setSubjects(subjectsRes.data);
             setTerms(termsRes.data);
             setPrograms(programsRes.data);
             setCurrentUser(profileRes.data);
+            setBatches(batchesRes.data);
         } catch (error) {
             console.error('Failed to fetch initial data:', error);
         } finally {
@@ -217,8 +243,8 @@ const MarksTab = () => {
                             onChange={(e) => setSelectedBatch(e.target.value)}
                         >
                             <option value="">Select Batch</option>
-                            {batchYears.map(year => (
-                                <option key={year} value={year}>{year}</option>
+                            {batches.map(batch => (
+                                <option key={batch} value={batch}>{batch}</option>
                             ))}
                         </select>
                     </div>
@@ -251,15 +277,21 @@ const MarksTab = () => {
                     <div className="space-y-1">
                         <label className="text-sm font-bold text-gray-700">Subject *</label>
                         <select
-                            className="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full border border-gray-300 rounded p-2 outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             value={selectedSubject}
                             onChange={(e) => setSelectedSubject(e.target.value)}
+                            disabled={!selectedBatch || !selectedProgram || !selectedSemester || loadingSubjects || subjects.length === 0}
                         >
-                            <option value="">Select Subject</option>
+                            <option value="">
+                                {loadingSubjects ? 'Loading subjects...' : subjects.length === 0 && selectedBatch && selectedProgram && selectedSemester ? 'No subjects available' : 'Select Subject'}
+                            </option>
                             {subjects.map(sub => (
                                 <option key={sub.id} value={sub.id}>{sub.name}</option>
                             ))}
                         </select>
+                        {selectedBatch && selectedProgram && selectedSemester && subjects.length > 0 && (
+                            <p className="text-xs text-green-600 mt-1">✓ {subjects.length} subject(s) available for selected batch</p>
+                        )}
                     </div>
                     <div className="space-y-1">
                         <label className="text-sm font-bold text-gray-700">Term *</label>

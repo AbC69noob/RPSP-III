@@ -12,7 +12,9 @@ public class Terms {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String code;
     private String name;
+    private String remarks;
     private Date startDate;
     private Date endDate;
 
@@ -20,6 +22,22 @@ public class Terms {
     private Timestamp createdAt;
 
     /* Getters and Setters */
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
 
     public Long getId() {
         return id;

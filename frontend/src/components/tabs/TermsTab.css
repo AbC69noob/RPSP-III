@@ -1,1 +1,45 @@
-/* TermsTab.css */
+/* TermsTab Specific Styles */
+
+.term-modal-content {
+    max-width: 500px;
+}
+
+.modal-overlay {
+    z-index: 1000;
+}
+
+/* Ensure consistent layout for form groups in terms */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.input-field {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background-color: #e5e7eb;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}

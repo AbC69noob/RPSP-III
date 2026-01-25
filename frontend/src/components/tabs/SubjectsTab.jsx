@@ -148,7 +148,7 @@ const SubjectsTab = () => {
                 }, {})).sort((a, b) => b[0].localeCompare(a[0])).map(([batch, programs]) => (
                     <div key={batch} className="batch-section">
                         <div className="flex items-center mb-6 border-b border-gray-300 pb-2">
-                            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Batch {batch}</h2>
+                            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Course Revised {batch}</h2>
                         </div>
 
                         <div className="space-y-6 pl-4">
@@ -193,8 +193,12 @@ const SubjectsTab = () => {
                                                                         <div className="flex justify-end gap-4">
                                                                             <button
                                                                                 onClick={() => handleEditClick(sub)}
-                                                                                className="bg-green-600 text-white hover:bg-green-700 px-3 py-1 rounded shadow-sm text-xs font-medium transition-colors">
-                                                                                Edit
+                                                                                className={`text-white px-3 py-1 rounded shadow-sm text-xs font-medium transition-colors ${
+                                                                                    getAssignedTeacherId(sub.id)
+                                                                                        ? 'bg-yellow-600 hover:bg-yellow-700'
+                                                                                        : 'bg-green-600 hover:bg-green-700'
+                                                                                }`}>
+                                                                                {getAssignedTeacherId(sub.id) ? 'Reassign' : 'Assign'}
                                                                             </button>
                                                                             <button
                                                                                 onClick={() => handleDeleteClick(sub.id)}
@@ -229,7 +233,7 @@ const SubjectsTab = () => {
                         <form onSubmit={handleCreate} className="modal-body space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="label">Batch</label>
+                                    <label className="label">Course Revised</label>
                                     <input required className="input-field" placeholder="2023"
                                         value={form.batch} onChange={e => setForm({ ...form, batch: e.target.value })} />
                                 </div>

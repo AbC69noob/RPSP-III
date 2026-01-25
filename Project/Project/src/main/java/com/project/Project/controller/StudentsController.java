@@ -23,6 +23,11 @@ public class StudentsController {
         return ResponseEntity.ok(repo.findAll());
     }
 
+    @GetMapping("/batches")
+    public ResponseEntity<List<String>> getBatches() {
+        return ResponseEntity.ok(repo.findDistinctBatches());
+    }
+
     // ================= GET STUDENT BY ID =================
     @GetMapping("/{id}")
     public ResponseEntity<Students> getById(@PathVariable Long id) {
@@ -35,8 +40,7 @@ public class StudentsController {
     @PutMapping("/{id}")
     public ResponseEntity<Students> updateStudent(
             @PathVariable Long id,
-            @RequestBody Students updated
-    ) {
+            @RequestBody Students updated) {
         Students student = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 

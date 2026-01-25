@@ -44,6 +44,19 @@ public class SubjectsController {
         return repo.findAllByActiveTrue(Sort.by("program.name").ascending().and(Sort.by("semester").ascending()));
     }
 
+    @GetMapping("/filter")
+    @PreAuthorize("hasAnyAuthority('admin','teacher')")
+    public List<Subjects> getFiltered(
+            @RequestParam Long programId,
+            @RequestParam Integer semester,
+            @RequestParam String batch) {
+        System.out
+                .println("Filtering subjects: programId=" + programId + ", semester=" + semester + ", batch=" + batch);
+        List<Subjects> result = repo.findFilteredSubjects(programId, semester, batch);
+        System.out.println("Found " + result.size() + " subjects");
+        return result;
+    }
+
     // ADMIN ONLY can create
     // ADMIN ONLY can create
     @PostMapping

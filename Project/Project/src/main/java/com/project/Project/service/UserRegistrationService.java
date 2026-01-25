@@ -5,9 +5,11 @@ import com.project.Project.model.Role;
 import com.project.Project.model.Users;
 import com.project.Project.model.Teachers;
 import com.project.Project.model.Students;
+import com.project.Project.model.Programs;
 import com.project.Project.repository.TeachersRepository;
 import com.project.Project.repository.StudentsRepository;
 import com.project.Project.repository.UsersRepository;
+import com.project.Project.repository.ProgramsRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,16 +23,19 @@ public class UserRegistrationService {
     private final UsersRepository usersRepo;
     private final TeachersRepository teachersRepo;
     private final StudentsRepository studentsRepo;
+    private final ProgramsRepository programsRepo;
     private final PasswordEncoder passwordEncoder;
 
     public UserRegistrationService(
             UsersRepository usersRepo,
             TeachersRepository teachersRepo,
             StudentsRepository studentsRepo,
+            ProgramsRepository programsRepo,
             PasswordEncoder passwordEncoder) {
         this.usersRepo = usersRepo;
         this.teachersRepo = teachersRepo;
         this.studentsRepo = studentsRepo;
+        this.programsRepo = programsRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -119,8 +124,12 @@ public class UserRegistrationService {
             student.setDob(Date.valueOf(request.getDob())); // yyyy-MM-dd
         }
 
-        // Optional: assign program if programId given
-        // student.setProgram(programRepo.findById(request.getProgramId()).orElse(null));
+        // Assign program if programId is provided
+        if (request.getProgramId() != null) {
+            Programs program = programsRepo.findById(request.getProgramId())
+                    .orElseThrow(() -> new RuntimeException("Program not found with id: " + request.getProgramId()));
+            student.setProgram(program);
+        }
 
         studentsRepo.save(student);
     }
