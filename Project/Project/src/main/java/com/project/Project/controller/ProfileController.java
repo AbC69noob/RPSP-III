@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProfileController {
 
     private final UsersRepository usersRepository;
+    private final com.project.Project.repository.TeachersRepository teachersRepository;
 
-    public ProfileController(UsersRepository usersRepository) {
+    public ProfileController(UsersRepository usersRepository,
+            com.project.Project.repository.TeachersRepository teachersRepository) {
         this.usersRepository = usersRepository;
+        this.teachersRepository = teachersRepository;
     }
 
     /**
@@ -30,11 +33,22 @@ public class ProfileController {
         Users user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if ("teacher".equalsIgnoreCase(user.getRole().name())) {
+            Long teacherId = teachersRepository.findByUserId(user.getId())
+                    .map(com.project.Project.model.Teachers::getId)
+                    .orElse(null);
+            return new ProfileDto(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getUsername(),
+                    user.getRole().name(),
+                    teacherId);
+        }
+
         return new ProfileDto(
                 user.getId(),
-                user.getUsername(),   // display name (change if fullName exists)
+                user.getUsername(), // display name (change if fullName exists)
                 user.getUsername(),
-                user.getRole().name()
-        );
+                user.getRole().name());
     }
 }

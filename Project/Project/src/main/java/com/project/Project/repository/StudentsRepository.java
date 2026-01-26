@@ -13,4 +13,6 @@ public interface StudentsRepository extends JpaRepository<Students, Long> {
 
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT s.batch FROM Students s WHERE s.batch IS NOT NULL ORDER BY s.batch DESC")
     List<String> findDistinctBatches();
+
+    List<Students> findByBatchAndProgramIdAndSemester(String batch, Long programId, Integer semester);
 }

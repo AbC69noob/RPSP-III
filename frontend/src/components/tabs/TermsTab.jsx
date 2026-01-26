@@ -14,7 +14,9 @@ const TermsTab = () => {
     const [termForm, setTermForm] = useState({
         code: '',
         name: '',
-        remarks: ''
+        remarks: '',
+        startDate: '',
+        endDate: ''
     });
 
     useEffect(() => {
@@ -48,7 +50,7 @@ const TermsTab = () => {
                 toast.success('Term created successfully!');
             }
             setShowModal(false);
-            setTermForm({ code: '', name: '', remarks: '' });
+            setTermForm({ code: '', name: '', remarks: '', startDate: '', endDate: '' });
             fetchTerms();
         } catch (error) {
             console.error('Failed to save term:', error);
@@ -61,7 +63,9 @@ const TermsTab = () => {
         setTermForm({
             code: term.code,
             name: term.name,
-            remarks: term.remarks || ''
+            remarks: term.remarks || '',
+            startDate: term.startDate || '',
+            endDate: term.endDate || ''
         });
         setShowModal(true);
     };
@@ -189,6 +193,28 @@ const TermsTab = () => {
                                         onChange={(e) => setTermForm({ ...termForm, name: e.target.value })}
                                     />
                                 </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="form-group">
+                                        <label className="label">Start Date *</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            className="input-field"
+                                            value={termForm.startDate}
+                                            onChange={(e) => setTermForm({ ...termForm, startDate: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">End Date *</label>
+                                        <input
+                                            type="date"
+                                            required
+                                            className="input-field"
+                                            value={termForm.endDate}
+                                            onChange={(e) => setTermForm({ ...termForm, endDate: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
                                 <div className="form-group">
                                     <label className="label">Remarks</label>
                                     <textarea
@@ -205,7 +231,7 @@ const TermsTab = () => {
                                         onClick={() => {
                                             setShowModal(false);
                                             setEditingId(null);
-                                            setTermForm({ code: '', name: '', remarks: '' });
+                                            setTermForm({ code: '', name: '', remarks: '', startDate: '', endDate: '' });
                                         }}
                                         className="btn btn-secondary mr-2"
                                     >

@@ -28,6 +28,14 @@ public class StudentsController {
         return ResponseEntity.ok(repo.findDistinctBatches());
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<Students>> getFilteredStudents(
+            @RequestParam String batch,
+            @RequestParam Long programId,
+            @RequestParam Integer semester) {
+        return ResponseEntity.ok(repo.findByBatchAndProgramIdAndSemester(batch, programId, semester));
+    }
+
     // ================= GET STUDENT BY ID =================
     @GetMapping("/{id}")
     public ResponseEntity<Students> getById(@PathVariable Long id) {

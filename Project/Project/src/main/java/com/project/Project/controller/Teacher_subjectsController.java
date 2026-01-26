@@ -22,6 +22,11 @@ public class Teacher_subjectsController {
         return repo.findAll();
     }
 
+    @GetMapping("/teacher/{teacherId}")
+    public List<Teacher_subjects> getByTeacher(@PathVariable Long teacherId) {
+        return repo.findByTeacherId(teacherId);
+    }
+
     @PostMapping
     public Teacher_subjects create(@RequestBody Teacher_subjects ts) {
         return repo.save(ts);
