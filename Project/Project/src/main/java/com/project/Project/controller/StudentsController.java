@@ -33,7 +33,25 @@ public class StudentsController {
             @RequestParam String batch,
             @RequestParam Long programId,
             @RequestParam Integer semester) {
-        return ResponseEntity.ok(repo.findByBatchAndProgramIdAndSemester(batch, programId, semester));
+        
+        // Log the incoming parameters for debugging
+        System.out.println("Filtering students with: batch=" + batch + ", programId=" + programId + ", semester=" + semester);
+        
+        // Validate required parameters
+        if (batch == null || batch.trim().isEmpty()) {
+            throw new RuntimeException("Batch parameter is required");
+        }
+        if (programId == null) {
+            throw new RuntimeException("Program ID parameter is required");
+        }
+        if (semester == null) {
+            throw new RuntimeException("Semester parameter is required");
+        }
+        
+        List<Students> students = repo.findByBatchAndProgramIdAndSemester(batch, programId, semester);
+        System.out.println("Found " + students.size() + " students matching criteria");
+        
+        return ResponseEntity.ok(students);
     }
 
     // ================= GET STUDENT BY ID =================

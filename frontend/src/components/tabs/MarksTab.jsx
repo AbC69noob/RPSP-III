@@ -108,15 +108,77 @@ const MarksTab = () => {
         setStudents([]);
         try {
             setLoadingStudents(true);
-            const response = await api.get('/students/filter', {
-                params: {
-                    batch: resolvedBatch,
+            
+            // Validate required parameters
+            if (!assignment.studentProgram?.id || !assignment.studentSemester) {
+                console.error('Missing required assignment data:', {
                     programId: assignment.studentProgram?.id,
-                    semester: assignment.studentSemester
+                    semester: assignment.studentSemester,
+                    batch: resolvedBatch
+                });
+                alert('This subject assignment is missing required data (Program or Semester). Please ask admin to complete the assignment details.');
+                setLoadingStudents(false);
+                return;
+            }
+            
+            // Use batch range logic: find students from previous batch to current batch
+            let response;
+            if (assignment.studentBatch) {
+                // Get previous batch for range filtering
+                try {
+                    const previousBatchResponse = await api.get('/subjects/previous-batches', {
+                        params: {
+                            programId: assignment.studentProgram.id,
+                            semester: assignment.studentSemester,
+                            currentBatch: assignment.studentBatch
+                        }
+                    });
+                    
+                    const previousBatches = previousBatchResponse.data;
+                    const fromBatch = previousBatches.length > 0 ? previousBatches[0] : assignment.studentBatch;
+                    
+                    console.log('Using batch range:', fromBatch, 'to', assignment.studentBatch);
+                    
+                    response = await api.get('/students/filter-by-range', {
+                        params: {
+                            fromBatch: fromBatch,
+                            toBatch: assignment.studentBatch,
+                            programId: assignment.studentProgram.id,
+                            semester: assignment.studentSemester
+                        }
+                    });
+                } catch (batchError) {
+                    console.warn('Failed to get previous batches, using exact batch match:', batchError);
+                    // Fallback to exact batch match
+                    response = await api.get('/students/filter', {
+                        params: {
+                            batch: assignment.studentBatch,
+                            programId: assignment.studentProgram.id,
+                            semester: assignment.studentSemester
+                        }
+                    });
                 }
-            });
+            } else {
+                // Fallback to exact batch match if no studentBatch in assignment
+                response = await api.get('/students/filter', {
+                    params: {
+                        batch: resolvedBatch,
+                        programId: assignment.studentProgram.id,
+                        semester: assignment.studentSemester
+                    }
+                });
+            }
             const filteredStudents = response.data;
+            console.log('Fetched students:', filteredStudents);
             setStudents(filteredStudents);
+            
+            if (filteredStudents.length === 0) {
+                console.warn('No students found for criteria:', {
+                    batch: resolvedBatch,
+                    programId: assignment.studentProgram.id,
+                    semester: assignment.studentSemester
+                });
+            }
 
             // Initialize marks entry state
             const initialEntryState = {};
@@ -144,6 +206,12 @@ const MarksTab = () => {
             setMarksEntry(initialEntryState);
         } catch (error) {
             console.error('Failed to fetch students:', error);
+            console.error('Request parameters were:', {
+                batch: resolvedBatch,
+                programId: assignment.studentProgram?.id,
+                semester: assignment.studentSemester
+            });
+            alert('Failed to load students. Please check the console for details.');
         } finally {
             setLoadingStudents(false);
         }

@@ -304,7 +304,7 @@ const Login = () => {
         <div className="login-container">
             <div className="login-card">
                 <h2 className="title">
-                    Result Management System
+                    Result Processing System
                 </h2>
 
                 {step === 'login' && renderLoginForm()}

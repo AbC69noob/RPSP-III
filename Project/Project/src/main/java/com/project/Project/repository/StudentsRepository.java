@@ -15,4 +15,14 @@ public interface StudentsRepository extends JpaRepository<Students, Long> {
     List<String> findDistinctBatches();
 
     List<Students> findByBatchAndProgramIdAndSemester(String batch, Long programId, Integer semester);
+    
+    // Alternative method with better null handling
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM Students s WHERE " +
+            "(:batch IS NULL OR s.batch = :batch) AND " +
+            "(:programId IS NULL OR s.program.id = :programId) AND " +
+            "(:semester IS NULL OR s.semester = :semester)")
+    List<Students> findByBatchAndProgramIdAndSemesterWithNulls(
+            @org.springframework.data.repository.query.Param("batch") String batch,
+            @org.springframework.data.repository.query.Param("programId") Long programId,
+            @org.springframework.data.repository.query.Param("semester") Integer semester);
 }

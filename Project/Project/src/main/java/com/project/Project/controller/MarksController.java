@@ -1,3 +1,4 @@
+//MarksController
 package com.project.Project.controller;
 
 import com.project.Project.dto.StudentMarksDto;
@@ -47,6 +48,7 @@ public class MarksController {
     public List<Marks> getAll() {
         return marksRepo.findAll();
     }
+
     @GetMapping("/search")
     public List<StudentMarksDto> searchMarks(
             @RequestParam String batch,
@@ -75,65 +77,46 @@ public class MarksController {
                 .sorted((a, b) -> a.getRollNo().compareTo(b.getRollNo()))
                 .toList();
     }
-    @PostMapping
-    public Marks create(@RequestBody Marks marks) {
 
-        // ===============================
-        // GET LOGGED-IN USER FROM JWT
-        // ===============================
+    @PostMapping("/bulk")
+    public List<Marks> createBulk(@RequestBody List<Marks> marksList) {
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName(); // comes from JWT
+        String username = auth.getName();
 
         Users uploader = userRepo.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Logged-in user not found"));
 
-        // ===============================
-        // VALIDATIONS
-        // ===============================
-        if (marks.getStudent() == null || marks.getStudent().getId() == null)
-            throw new IllegalArgumentException("Student ID must not be null");
+        for (Marks marks : marksList) {
 
-        if (marks.getSubject() == null || marks.getSubject().getId() == null)
-            throw new IllegalArgumentException("Subject ID must not be null");
+            if (marks.getStudent() == null || marks.getStudent().getId() == null)
+                throw new IllegalArgumentException("Student ID must not be null");
 
-        if (marks.getTerm() == null || marks.getTerm().getId() == null)
-            throw new IllegalArgumentException("Term ID must not be null");
+            if (marks.getSubject() == null || marks.getSubject().getId() == null)
+                throw new IllegalArgumentException("Subject ID must not be null");
 
-        if (marks.getObtainedMarks() == null)
-            throw new IllegalArgumentException("Obtained marks must not be null");
+            if (marks.getTerm() == null || marks.getTerm().getId() == null)
+                throw new IllegalArgumentException("Term ID must not be null");
 
-        // ===============================
-        // PREVENT DUPLICATES
-        // ===============================
-        if (marksRepo.existsByStudentIdAndSubjectIdAndTermId(
-                marks.getStudent().getId(),
-                marks.getSubject().getId(),
-                marks.getTerm().getId()
-        )) {
-            throw new IllegalStateException("Marks already assigned for this subject");
+            if (marks.getObtainedMarks() == null)
+                throw new IllegalArgumentException("Obtained marks must not be null");
+
+            Students student = studentRepo.findById(marks.getStudent().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+
+            Subjects subject = subjectRepo.findById(marks.getSubject().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Subject not found"));
+
+            Terms term = termRepo.findById(marks.getTerm().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Term not found"));
+
+            marks.setStudent(student);
+            marks.setSubject(subject);
+            marks.setTerm(term);
+            marks.setUploadedBy(uploader);
+            marks.setUploadedAt(new Timestamp(System.currentTimeMillis()));
         }
 
-        // ===============================
-        // FETCH ENTITIES
-        // ===============================
-        Students student = studentRepo.findById(marks.getStudent().getId())
-                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-
-        Subjects subject = subjectRepo.findById(marks.getSubject().getId())
-                .orElseThrow(() -> new IllegalArgumentException("Subject not found"));
-
-        Terms term = termRepo.findById(marks.getTerm().getId())
-                .orElseThrow(() -> new IllegalArgumentException("Term not found"));
-
-        // ===============================
-        // SET FIELDS
-        // ===============================
-        marks.setStudent(student);
-        marks.setSubject(subject);
-        marks.setTerm(term);
-        marks.setUploadedBy(uploader);
-        marks.setUploadedAt(new Timestamp(System.currentTimeMillis()));
-
-        return marksRepo.save(marks);
+        return marksRepo.saveAll(marksList);
     }
 }

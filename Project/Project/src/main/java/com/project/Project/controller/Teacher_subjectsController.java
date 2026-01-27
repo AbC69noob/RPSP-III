@@ -24,7 +24,7 @@ public class Teacher_subjectsController {
 
     @GetMapping("/teacher/{teacherId}")
     public List<Teacher_subjects> getByTeacher(@PathVariable Long teacherId) {
-        return repo.findByTeacherId(teacherId);
+        return repo.findByTeacherIdAndSubjectActiveTrue(teacherId);
     }
 
     @PostMapping

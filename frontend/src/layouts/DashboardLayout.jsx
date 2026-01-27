@@ -28,7 +28,7 @@ const DashboardLayout = () => {
         <aside className="sidebar">
           <div className="sidebar-brand">
             <LayoutDashboard size={24} color="var(--primary-light)" />
-            <span className="brand-text">RMS Admin</span>
+            <span className="brand-text">RPS Admin</span>
           </div>
           <nav className="sidebar-nav">
             <NavLink to="users" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
