@@ -31,17 +31,11 @@ public class Subjects {
     @Column(name = "active")
     private Boolean active = true;
 
-    private String batch;
+    @ManyToOne
+    @JoinColumn(name = "course_batch_id", nullable = true)
+    private CourseBatch courseBatch;  // <-- FK to CourseBatch
 
     /* Getters and Setters */
-
-    public String getBatch() {
-        return batch;
-    }
-
-    public void setBatch(String batch) {
-        this.batch = batch;
-    }
 
     public Boolean getActive() {
         return active;
@@ -101,6 +95,14 @@ public class Subjects {
 
     public void setSemester(Integer semester) {
         this.semester = semester;
+    }
+
+    public CourseBatch getCourseBatch() {
+        return courseBatch;
+    }
+
+    public void setCourseBatch(CourseBatch courseBatch) {
+        this.courseBatch = courseBatch;
     }
 
     public Programs getProgram() {

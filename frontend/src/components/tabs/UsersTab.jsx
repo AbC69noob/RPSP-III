@@ -8,8 +8,11 @@ const UsersTab = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showBatchModal, setShowBatchModal] = useState(false); // Student Batch Modal
     const [programs, setPrograms] = useState([]);
-    const [filterRole, setFilterRole] = useState('');  // Add filter state
+    const [studentBatches, setStudentBatches] = useState([]); // List of student batches
+    const [courseBatches, setCourseBatches] = useState([]); // List of course batches (revisions)
+    const [filterRole, setFilterRole] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
@@ -19,7 +22,7 @@ const UsersTab = () => {
         username: '',
         email: '',
         password: '',
-        role: 'student', // Default as per requirement
+        role: 'student',
         name: '',
         gender: 'Male',
         dob: '',
@@ -27,7 +30,7 @@ const UsersTab = () => {
         temporaryAddress: '',
         // Student specific
         rollNo: '',
-        batch: '',
+        studentBatchId: '', // Changed from batch (string) to ID
         semester: '',
         programId: '',
         // Teacher specific
@@ -37,11 +40,19 @@ const UsersTab = () => {
         status: true
     };
 
+    // Batch Form State
+    const [batchForm, setBatchForm] = useState({
+        name: '',
+        courseBatchId: ''
+    });
+
     const [formData, setFormData] = useState(initialFormState);
 
     useEffect(() => {
         fetchUsers();
         fetchPrograms();
+        fetchStudentBatches();
+        fetchCourseBatches();
     }, []);
 
     const fetchUsers = async () => {
@@ -61,6 +72,24 @@ const UsersTab = () => {
             setPrograms(response.data);
         } catch (error) {
             console.error('Failed to fetch programs:', error);
+        }
+    };
+
+    const fetchStudentBatches = async () => {
+        try {
+            const response = await api.get('/student-batches');
+            setStudentBatches(response.data);
+        } catch (error) {
+            console.error('Failed to fetch student batches:', error);
+        }
+    };
+
+    const fetchCourseBatches = async () => {
+        try {
+            const response = await api.get('/api/admin/course-batches');
+            setCourseBatches(response.data);
+        } catch (error) {
+            console.error('Failed to fetch course batches:', error);
         }
     };
 
@@ -94,6 +123,23 @@ const UsersTab = () => {
         });
     };
 
+    const handleBatchSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/student-batches', {
+                name: batchForm.name,
+                courseBatch: { id: batchForm.courseBatchId } // Backend expects CourseBatch object or ID handling
+            });
+            toast.success('Student Batch created successfully');
+            setShowBatchModal(false);
+            setBatchForm({ name: '', courseBatchId: '' });
+            fetchStudentBatches();
+        } catch (error) {
+            console.error('Failed to create student batch:', error);
+            toast.error('Failed to create student batch');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -114,7 +160,7 @@ const UsersTab = () => {
                     permanentAddress: formData.permanentAddress,
                     temporaryAddress: formData.temporaryAddress,
                     rollNo: formData.rollNo ? Number(formData.rollNo) : null,
-                    batch: formData.batch,
+                    studentBatchId: formData.studentBatchId ? Number(formData.studentBatchId) : null,
                     semester: formData.semester ? Number(formData.semester) : null,
                     programId: formData.programId ? Number(formData.programId) : null
                 };
@@ -135,7 +181,7 @@ const UsersTab = () => {
 
             await api.post('/users/create', payload);
             toast.success('User created successfully!');
-            
+
             // Keep program, semester, batch - only clear user-specific fields
             setFormData({
                 ...formData,
@@ -152,7 +198,7 @@ const UsersTab = () => {
                 qualifications: '',
                 contactNo: ''
             });
-            
+
             fetchUsers();
         } catch (error) {
             console.error('Failed to create user:', error);
@@ -165,12 +211,20 @@ const UsersTab = () => {
             {/* Top Card: Users Management */}
             <div className="card flex justify-between items-center">
                 <h3 className="text-lg font-bold text-gray-800 m-0">Users Management</h3>
-                <button
-                    className="btn btn-primary"
-                    onClick={() => setShowModal(true)}
-                >
-                    Create User
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => setShowBatchModal(true)}
+                    >
+                        Create Student Batch
+                    </button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => setShowModal(true)}
+                    >
+                        Create User
+                    </button>
+                </div>
             </div>
 
             {/* Create User Modal */}
@@ -348,15 +402,19 @@ const UsersTab = () => {
                                             />
                                         </div>
                                         <div className="form-group">
-                                            <label className="label">Batch</label>
-                                            <input
-                                                type="text"
-                                                name="batch"
-                                                placeholder='2021'
+                                            <label className="label">Student Batch *</label>
+                                            <select
+                                                name="studentBatchId"
+                                                required
                                                 className="input-field"
-                                                value={formData.batch}
+                                                value={formData.studentBatchId}
                                                 onChange={handleInputChange}
-                                            />
+                                            >
+                                                <option value="">Select Batch</option>
+                                                {studentBatches.map(batch => (
+                                                    <option key={batch.id} value={batch.id}>{batch.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
                                 )}
@@ -525,6 +583,57 @@ const UsersTab = () => {
                             >
                                 {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Create Student Batch Modal */}
+            {showBatchModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '500px' }}>
+                        <div className="modal-header">
+                            <h2 className="text-xl font-bold text-gray-800 m-0">Create Student Batch</h2>
+                            <button
+                                onClick={() => setShowBatchModal(false)}
+                                className="btn btn-danger"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <form onSubmit={handleBatchSubmit} className="space-y-4">
+                                <div className="form-group">
+                                    <label className="label">Batch Name * (e.g., 2021 Fall)</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="input-field"
+                                        value={batchForm.name}
+                                        onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="label">Course Revision (Curriculum) *</label>
+                                    <select
+                                        required
+                                        className="input-field"
+                                        value={batchForm.courseBatchId}
+                                        onChange={(e) => setBatchForm({ ...batchForm, courseBatchId: e.target.value })}
+                                    >
+                                        <option value="">Select Course Revision</option>
+                                        {courseBatches.map(cb => (
+                                            <option key={cb.id} value={cb.id}>
+                                                {cb.program?.name} - {cb.batchYear} ({cb.remarks})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="submit" className="btn btn-primary">
+                                        Create Batch
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

@@ -4,6 +4,7 @@ import com.project.Project.dto.UserRequest;
 import com.project.Project.model.Role;
 import com.project.Project.model.Users;
 import com.project.Project.service.UserRegistrationService;
+import jakarta.annotation.security.PermitAll;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class UsersController {
 
     // ================= CREATE USER =================
     @PostMapping("/create")
+    @PermitAll
     public ResponseEntity<Users> createUser(@RequestBody UserRequest request) {
         Users user = registrationService.registerUser(request);
         return ResponseEntity.ok(user);

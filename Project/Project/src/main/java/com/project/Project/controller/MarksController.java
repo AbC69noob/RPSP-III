@@ -1,4 +1,3 @@
-//MarksController
 package com.project.Project.controller;
 
 import com.project.Project.dto.StudentMarksDto;
@@ -51,12 +50,19 @@ public class MarksController {
 
     @GetMapping("/search")
     public List<StudentMarksDto> searchMarks(
-            @RequestParam String batch,
+            @RequestParam Long courseBatchId,
             @RequestParam Long programId,
             @RequestParam Integer semester,
             @RequestParam Long termId
     ) {
-        List<Marks> marksList = marksRepo.findByBatchProgramSemesterTerm(batch, programId, semester, termId);
+        List<Marks> marksList =
+                marksRepo.findByBatchProgramSemesterTerm(
+                        courseBatchId,
+                        programId,
+                        semester,
+                        termId
+                );
+
 
         // Map studentId -> DTO
         Map<Long, StudentMarksDto> studentMap = new HashMap<>();

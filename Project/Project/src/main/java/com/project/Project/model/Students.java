@@ -13,7 +13,7 @@ public class Students {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false , unique = true)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private Users user;
 
     private String name;
@@ -27,8 +27,11 @@ public class Students {
     private String temporaryAddress;
 
     private Long rollNo;
-    private String batch;
     private Integer semester;
+
+    @ManyToOne
+    @JoinColumn(name = "student_batch_id")
+    private StudentBatch studentBatch;
 
     @ManyToOne
     @JoinColumn(name = "program_id")
@@ -103,12 +106,12 @@ public class Students {
         this.rollNo = rollNo;
     }
 
-    public String getBatch() {
-        return batch;
+    public StudentBatch getStudentBatch() {
+        return studentBatch;
     }
 
-    public void setBatch(String batch) {
-        this.batch = batch;
+    public void setStudentBatch(StudentBatch studentBatch) {
+        this.studentBatch = studentBatch;
     }
 
     public Integer getSemester() {

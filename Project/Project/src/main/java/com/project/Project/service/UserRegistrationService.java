@@ -10,6 +10,7 @@ import com.project.Project.repository.TeachersRepository;
 import com.project.Project.repository.StudentsRepository;
 import com.project.Project.repository.UsersRepository;
 import com.project.Project.repository.ProgramsRepository;
+import com.project.Project.repository.StudentBatchRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class UserRegistrationService {
     private final TeachersRepository teachersRepo;
     private final StudentsRepository studentsRepo;
     private final ProgramsRepository programsRepo;
+    private final StudentBatchRepository studentBatchRepo;
     private final PasswordEncoder passwordEncoder;
 
     public UserRegistrationService(
@@ -31,11 +33,13 @@ public class UserRegistrationService {
             TeachersRepository teachersRepo,
             StudentsRepository studentsRepo,
             ProgramsRepository programsRepo,
+            StudentBatchRepository studentBatchRepo,
             PasswordEncoder passwordEncoder) {
         this.usersRepo = usersRepo;
         this.teachersRepo = teachersRepo;
         this.studentsRepo = studentsRepo;
         this.programsRepo = programsRepo;
+        this.studentBatchRepo = studentBatchRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -114,7 +118,13 @@ public class UserRegistrationService {
         student.setUser(user);
         student.setName(request.getUsername());
         student.setRollNo(request.getRollNo());
-        student.setBatch(request.getBatch());
+
+        // New Logic: Use studentBatchId if available
+        if (request.getStudentBatchId() != null) {
+            studentBatchRepo.findById(request.getStudentBatchId())
+                    .ifPresent(student::setStudentBatch);
+        }
+
         student.setSemester(request.getSemester() != null ? request.getSemester() : 1);
         student.setPermanentAddress(request.getPermanentAddress());
         student.setTemporaryAddress(request.getTemporaryAddress());
@@ -133,4 +143,5 @@ public class UserRegistrationService {
 
         studentsRepo.save(student);
     }
+
 }

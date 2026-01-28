@@ -18,7 +18,9 @@ public class Teacher_subjects {
     @JoinColumn(name = "subject_id", nullable = false)
     private Subjects subject;
 
-    private String studentBatch;
+    @ManyToOne
+    @JoinColumn(name = "course_batch_id", nullable = true)
+    private CourseBatch studentBatch;
 
     @ManyToOne
     @JoinColumn(name = "student_program_id")
@@ -52,11 +54,11 @@ public class Teacher_subjects {
         this.subject = subject;
     }
 
-    public String getStudentBatch() {
+    public CourseBatch getStudentBatch() {
         return studentBatch;
     }
 
-    public void setStudentBatch(String studentBatch) {
+    public void setStudentBatch(CourseBatch studentBatch) {
         this.studentBatch = studentBatch;
     }
 

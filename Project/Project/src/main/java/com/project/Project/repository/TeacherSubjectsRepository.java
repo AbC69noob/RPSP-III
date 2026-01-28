@@ -10,6 +10,6 @@ public interface TeacherSubjectsRepository extends JpaRepository<Teacher_subject
     Optional<Teacher_subjects> findBySubjectId(Long subjectId);
 
     List<Teacher_subjects> findByTeacherId(Long teacherId);
-    
+
     List<Teacher_subjects> findByTeacherIdAndSubjectActiveTrue(Long teacherId);
 }
