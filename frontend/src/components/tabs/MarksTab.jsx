@@ -121,53 +121,13 @@ const MarksTab = () => {
                 return;
             }
             
-            // Use batch range logic: find students from previous batch to current batch
-            let response;
-            if (assignment.studentBatch) {
-                // Get previous batch for range filtering
-                try {
-                    const previousBatchResponse = await api.get('/subjects/previous-batches', {
-                        params: {
-                            programId: assignment.studentProgram.id,
-                            semester: assignment.studentSemester,
-                            currentBatch: assignment.studentBatch
-                        }
-                    });
-                    
-                    const previousBatches = previousBatchResponse.data;
-                    const fromBatch = previousBatches.length > 0 ? previousBatches[0] : assignment.studentBatch;
-                    
-                    console.log('Using batch range:', fromBatch, 'to', assignment.studentBatch);
-                    
-                    response = await api.get('/students/filter-by-range', {
-                        params: {
-                            fromBatch: fromBatch,
-                            toBatch: assignment.studentBatch,
-                            programId: assignment.studentProgram.id,
-                            semester: assignment.studentSemester
-                        }
-                    });
-                } catch (batchError) {
-                    console.warn('Failed to get previous batches, using exact batch match:', batchError);
-                    // Fallback to exact batch match
-                    response = await api.get('/students/filter', {
-                        params: {
-                            batch: assignment.studentBatch,
-                            programId: assignment.studentProgram.id,
-                            semester: assignment.studentSemester
-                        }
-                    });
+            // Use simple program and semester filtering
+            const response = await api.get('/students/filter', {
+                params: {
+                    programId: assignment.studentProgram.id,
+                    semester: assignment.studentSemester
                 }
-            } else {
-                // Fallback to exact batch match if no studentBatch in assignment
-                response = await api.get('/students/filter', {
-                    params: {
-                        batch: resolvedBatch,
-                        programId: assignment.studentProgram.id,
-                        semester: assignment.studentSemester
-                    }
-                });
-            }
+            });
             const filteredStudents = response.data;
             console.log('Fetched students:', filteredStudents);
             setStudents(filteredStudents);

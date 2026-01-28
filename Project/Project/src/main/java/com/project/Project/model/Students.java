@@ -30,12 +30,12 @@ public class Students {
     private Integer semester;
 
     @ManyToOne
-    @JoinColumn(name = "student_batch_id")
-    private StudentBatch studentBatch;
-
-    @ManyToOne
     @JoinColumn(name = "program_id")
     private Programs program;
+
+    @ManyToOne
+    @JoinColumn(name = "student_batch_id")
+    private StudentBatch studentBatch;
 
     @Column(name = "created_at")
     private Timestamp createdAt;
@@ -106,14 +106,6 @@ public class Students {
         this.rollNo = rollNo;
     }
 
-    public StudentBatch getStudentBatch() {
-        return studentBatch;
-    }
-
-    public void setStudentBatch(StudentBatch studentBatch) {
-        this.studentBatch = studentBatch;
-    }
-
     public Integer getSemester() {
         return semester;
     }
@@ -128,6 +120,14 @@ public class Students {
 
     public void setProgram(Programs program) {
         this.program = program;
+    }
+
+    public StudentBatch getStudentBatch() {
+        return studentBatch;
+    }
+
+    public void setStudentBatch(StudentBatch studentBatch) {
+        this.studentBatch = studentBatch;
     }
 
     public Timestamp getCreatedAt() {

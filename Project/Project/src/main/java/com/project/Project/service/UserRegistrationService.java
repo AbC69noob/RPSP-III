@@ -119,7 +119,7 @@ public class UserRegistrationService {
         student.setName(request.getUsername());
         student.setRollNo(request.getRollNo());
 
-        // New Logic: Use studentBatchId if available
+        // Remove studentBatch assignment since we removed it from Students model
         if (request.getStudentBatchId() != null) {
             studentBatchRepo.findById(request.getStudentBatchId())
                     .ifPresent(student::setStudentBatch);
