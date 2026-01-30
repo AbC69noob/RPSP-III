@@ -39,4 +39,13 @@ public class UsersController {
         registrationService.deleteUser(id);
         return ResponseEntity.ok("User deleted with id: " + id);
     }
+
+    // ================= CHANGE PASSWORD =================
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(@RequestBody java.util.Map<String, String> request) {
+        Long userId = Long.parseLong(request.get("userId"));
+        String newPassword = request.get("newPassword");
+        registrationService.changePassword(userId, newPassword);
+        return ResponseEntity.ok("Password changed successfully");
+    }
 }

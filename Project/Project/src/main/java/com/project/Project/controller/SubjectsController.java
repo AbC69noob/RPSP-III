@@ -51,10 +51,11 @@ public class SubjectsController {
     @PreAuthorize("hasAnyAuthority('admin','teacher')")
     public List<Subjects> getFiltered(
             @RequestParam Long programId,
-            @RequestParam Integer semester) {
-        System.out
-                .println("Filtering subjects: programId=" + programId + ", semester=" + semester);
-        List<Subjects> result = repo.findFilteredSubjects(programId, semester);
+            @RequestParam Integer semester,
+            @RequestParam(required = false) Long courseBatchId) {
+        System.out.println("Filtering subjects: programId=" + programId + ", semester=" + semester + ", courseBatchId="
+                + courseBatchId);
+        List<Subjects> result = repo.findFilteredSubjects(programId, semester, courseBatchId);
         System.out.println("Found " + result.size() + " subjects");
         return result;
     }

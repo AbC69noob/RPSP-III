@@ -22,7 +22,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private final JwtUtils jwtUtils;
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
-                                   JwtUtils jwtUtils) {
+            JwtUtils jwtUtils) {
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         setFilterProcessesUrl("/login");
@@ -30,18 +30,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request,
-                                                HttpServletResponse response)
+            HttpServletResponse response)
             throws AuthenticationException {
 
         try {
-            LoginRequest authRequest =
-                    new ObjectMapper().readValue(request.getInputStream(), LoginRequest.class);
+            LoginRequest authRequest = new ObjectMapper().readValue(request.getInputStream(), LoginRequest.class);
 
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(
-                            authRequest.getUsername(),
-                            authRequest.getPassword()
-                    );
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    authRequest.getUsername(),
+                    authRequest.getPassword());
 
             return authenticationManager.authenticate(authToken);
 
@@ -52,10 +49,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request,
-                                            HttpServletResponse response,
-                                            FilterChain chain,
-                                            Authentication authResult)
+            HttpServletResponse response,
+            FilterChain chain,
+            Authentication authResult)
             throws IOException, ServletException {
+
+        UserPrincipal userPrincipal = (UserPrincipal) authResult.getPrincipal();
 
         boolean isStudent = authResult.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("student"));
@@ -64,10 +63,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json");
             response.getWriter().write("""
-                {
-                  "message": "Students must log in via the mobile application."
-                }
-            """);
+                        {
+                          "message": "Students must log in via the mobile application."
+                        }
+                    """);
             return;
         }
 
@@ -76,8 +75,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
 
-        Map<String, String> tokenMap = new HashMap<>();
+        Map<String, Object> tokenMap = new HashMap<>();
         tokenMap.put("token", token);
+        tokenMap.put("requiresPasswordChange", userPrincipal.isRequiresPasswordChange());
 
         new ObjectMapper().writeValue(response.getWriter(), tokenMap);
     }

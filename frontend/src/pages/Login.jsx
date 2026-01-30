@@ -8,12 +8,14 @@ const Login = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Forgot Password Flow States
-    const [step, setStep] = useState('login'); // login, forgot-email, verify-otp, reset-password
+    const [step, setStep] = useState('login'); // login, forgot-email, verify-otp, reset-password, force-password-change
     const [forgotEmail, setForgotEmail] = useState('');
     const [otp, setOtp] = useState('');
     const [generatedOtp, setGeneratedOtp] = useState('');
@@ -32,7 +34,7 @@ const Login = () => {
 
         try {
             const response = await api.post('/login', formData);
-            const { token } = response.data;
+            const { token, requiresPasswordChange } = response.data;
 
             const decoded = jwtDecode(token);
             const role = decoded.role;
@@ -48,11 +50,19 @@ const Login = () => {
             // Fetch profile to get correct Role (Backend JWT might be missing it)
             const profileRes = await api.get('/profile');
             const userRole = profileRes.data.role.toLowerCase();
+            const userId = profileRes.data.id;
 
             localStorage.setItem('user', JSON.stringify({
+                id: userId,
                 username: decoded.sub,
                 role: userRole
             }));
+
+            if (requiresPasswordChange) {
+                setStep('force-password-change');
+                setLoading(false);
+                return;
+            }
 
             navigate('/dashboard');
 
@@ -100,6 +110,51 @@ const Login = () => {
         } catch (err) {
             setLoading(false);
             setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
+        }
+    };
+
+    const validatePassword = (password) => {
+        return {
+            length: password.length >= 8,
+            lowercase: /[a-z]/.test(password),
+            uppercase: /[A-Z]/.test(password),
+            number: /[0-9]/.test(password),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+    };
+
+    const handleForcePasswordChange = async (e) => {
+        e.preventDefault();
+        setError('');
+
+        const requirements = validatePassword(newPassword);
+        const allMet = Object.values(requirements).every(Boolean);
+
+        if (!allMet) {
+            setError('Please meet all password requirements');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const userData = JSON.parse(localStorage.getItem('user'));
+            await api.post('/users/change-password', {
+                userId: userData.id,
+                newPassword: newPassword
+            });
+            setLoading(false);
+            setSuccess('Password updated successfully. Accessing dashboard...');
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 1500);
+        } catch (err) {
+            setLoading(false);
+            setError(err.response?.data?.message || 'Failed to update password. Please try again.');
         }
     };
 
@@ -269,25 +324,43 @@ const Login = () => {
             <h3 className="text-lg font-semibold text-center mb-4">New Password</h3>
             <div className="form-group">
                 <label className="label">New Password</label>
-                <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="input-field"
-                    placeholder="Enter new password"
-                    required
-                />
+                <div className="input-group">
+                    <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="input-field pr-14"
+                        placeholder="Enter new password"
+                        required
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="password-toggle"
+                    >
+                        {showNewPassword ? 'Hide' : 'Show'}
+                    </button>
+                </div>
             </div>
             <div className="form-group">
                 <label className="label">Confirm Password</label>
-                <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="input-field"
-                    placeholder="Confirm new password"
-                    required
-                />
+                <div className="input-group">
+                    <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="input-field pr-14"
+                        placeholder="Confirm new password"
+                        required
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="password-toggle"
+                    >
+                        {showConfirmPassword ? 'Hide' : 'Show'}
+                    </button>
+                </div>
             </div>
             {error && <p className="text-danger text-xs text-center mb-4">{error}</p>}
             <button
@@ -311,6 +384,86 @@ const Login = () => {
                 {step === 'forgot-email' && renderForgotEmailForm()}
                 {step === 'verify-otp' && renderVerifyOtpForm()}
                 {step === 'reset-password' && renderResetPasswordForm()}
+                {step === 'force-password-change' && (
+                    <form onSubmit={handleForcePasswordChange}>
+                        <h3 className="text-lg font-semibold text-center mb-1">First-Time Login</h3>
+                        <p className="text-xs text-center text-gray-500 mb-4">Security policy requires you to change your default password.</p>
+
+                        <div className="form-group mb-4">
+                            <label className="label">New Password</label>
+                            <div className="input-group">
+                                <input
+                                    type={showNewPassword ? 'text' : 'password'}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="input-field pr-14"
+                                    placeholder="Create new password"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="password-toggle"
+                                >
+                                    {showNewPassword ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="password-requirements mb-4">
+                            <p className="text-xs font-semibold mb-2 text-gray-700">Password must contain:</p>
+                            <div className="grid grid-cols-1 gap-1">
+                                {[
+                                    { key: 'length', text: 'At least 8 characters' },
+                                    { key: 'lowercase', text: 'At least one lowercase letter' },
+                                    { key: 'uppercase', text: 'At least one uppercase letter' },
+                                    { key: 'number', text: 'At least one number' },
+                                    { key: 'special', text: 'At least one special character' }
+                                ].map(req => {
+                                    const isMet = validatePassword(newPassword)[req.key];
+                                    return (
+                                        <div key={req.key} className={`flex items-center gap-2 text-xs ${isMet ? 'text-success' : 'text-gray-400'}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${isMet ? 'bg-success' : 'bg-gray-300'}`}></span>
+                                            {req.text}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="label">Confirm Password</label>
+                            <div className="input-group">
+                                <input
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="input-field pr-14"
+                                    placeholder="Confirm new password"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="password-toggle"
+                                >
+                                    {showConfirmPassword ? 'Hide' : 'Show'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {error && <p className="text-danger text-xs text-center mb-4 mt-4">{error}</p>}
+                        {success && <p className="text-success text-xs text-center mb-4 mt-4">{success}</p>}
+
+                        <button
+                            type="submit"
+                            className="btn btn-primary mt-4"
+                            disabled={loading}
+                        >
+                            {loading ? 'Updating...' : 'Set New Password & Continue'}
+                        </button>
+                    </form>
+                )}
 
                 {step === 'login' && (
                     <div className="info-box">

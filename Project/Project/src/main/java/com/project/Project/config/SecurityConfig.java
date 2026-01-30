@@ -71,6 +71,9 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 // .requestMatchers("/users/create").permitAll()
 
+                                                // SHARED / AUTHENTICATED
+                                                .requestMatchers("/users/change-password").authenticated()
+
                                                 // ADMIN ONLY
                                                 .requestMatchers(
                                                                 "/users/**",

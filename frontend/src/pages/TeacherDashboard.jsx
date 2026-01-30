@@ -13,6 +13,8 @@ import {
     UserCheck
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import '../components/tabs/MarksTab.css';
+import { Save } from 'lucide-react';
 
 const TeacherDashboard = () => {
     const [terms, setTerms] = useState([]);
@@ -152,6 +154,12 @@ const TeacherDashboard = () => {
     };
 
     const handleMarkChange = (studentId, field, value) => {
+        // Prevent negative values for obtained marks
+        if (field === 'obtainedMarks' && value !== '' && Number(value) < 0) {
+            toast.warn("Marks cannot be negative");
+            return;
+        }
+
         setMarksEntry(prev => ({
             ...prev,
             [studentId]: {
@@ -414,76 +422,66 @@ const TeacherDashboard = () => {
                             <p className="mt-4 text-gray-500 font-medium">Crunching student records...</p>
                         </div>
                     ) : (
-                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-                                <h3 className="font-black text-gray-800 flex items-center gap-2">
-                                    <UserCheck size={20} className="text-indigo-600" /> Student Enrollment ({students.length})
-                                </h3>
-                                <div className="text-xs text-gray-400 flex items-center gap-4">
-                                    <span className="flex items-center gap-1"><Circle size={8} className="fill-blue-500 text-blue-500" /> New</span>
-                                    <span className="flex items-center gap-1"><Circle size={8} className="fill-green-500 text-green-500" /> Saved</span>
-                                </div>
-                            </div>
-
+                        <div className="space-y-6">
                             <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-gray-50/50 border-b border-gray-100">
+                                <table className="modern-table">
+                                    <thead>
                                         <tr>
-                                            <th className="py-4 px-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-24">Roll No</th>
-                                            <th className="py-4 px-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Full Name</th>
-                                            <th className="py-4 px-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest w-48">Marks Obtained</th>
-                                            <th className="py-4 px-6 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Remarks / Observations</th>
-                                            <th className="py-4 px-6 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest w-32">Status</th>
+                                            <th style={{ width: '80px' }}>Roll</th>
+                                            <th>Student Identity</th>
+                                            <th style={{ width: '100px' }}>Full Mark</th>
+                                            <th style={{ width: '100px' }}>Pass Mark</th>
+                                            <th style={{ width: '160px' }}>Obtained Marks</th>
+                                            <th>Faculty Remarks</th>
+                                            <th style={{ width: '140px', textAlign: 'center' }}>Sync Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                                    <tbody>
                                         {students.length === 0 ? (
                                             <tr>
-                                                <td colSpan="5" className="py-20 text-center text-gray-400 font-medium italic">No students found for this subject revision.</td>
+                                                <td colSpan="7" className="text-center py-12 text-gray-400 italic">No matches found.</td>
                                             </tr>
                                         ) : (
                                             students.map((student) => {
                                                 const entry = marksEntry[student.id] || {};
                                                 return (
-                                                    <tr key={student.id} className="hover:bg-indigo-50/30 transition-colors group">
-                                                        <td className="py-5 px-6 font-bold text-gray-400 text-sm">{student.rollNo}</td>
-                                                        <td className="py-5 px-6">
-                                                            <div className="font-extrabold text-gray-900">{student.name}</div>
-                                                            <div className="text-[10px] text-gray-400 uppercase tracking-tighter mt-0.5">{student.email || 'No email provided'}</div>
+                                                    <tr key={student.id}>
+                                                        <td className="font-bold text-gray-500">{student.rollNo}</td>
+                                                        <td>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-black text-gray-900">{student.name}</span>
+                                                                <span className="text-[10px] text-gray-400 font-bold uppercase">{student.gender || 'Student'}</span>
+                                                            </div>
                                                         </td>
-                                                        <td className="py-5 px-6">
-                                                            <div className="relative max-w-[140px]">
+                                                        <td className="font-bold text-gray-600">{selectedAssignment.subject.fullMark}</td>
+                                                        <td className="font-bold text-red-600">{selectedAssignment.subject.passMarks}</td>
+                                                        <td>
+                                                            <div className="relative">
                                                                 <input
                                                                     type="number"
                                                                     step="0.01"
-                                                                    className={`w-full bg-gray-50 border ${Number(entry.obtainedMarks) < selectedAssignment.subject.passMarks && entry.obtainedMarks !== '' ? 'border-red-200 focus:ring-red-500' : 'border-gray-200 focus:ring-indigo-500'} rounded-xl p-3 outline-none focus:ring-2 focus:bg-white transition-all font-black text-lg text-gray-800`}
+                                                                    min="0"
+                                                                    className="table-input"
                                                                     placeholder="00"
                                                                     value={entry.obtainedMarks}
                                                                     onChange={(e) => handleMarkChange(student.id, 'obtainedMarks', e.target.value)}
                                                                 />
-                                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-gray-300 uppercase">
-                                                                    / {selectedAssignment.subject.fullMark}
-                                                                </div>
                                                             </div>
                                                         </td>
-                                                        <td className="py-5 px-6">
+                                                        <td>
                                                             <input
                                                                 type="text"
-                                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-sm font-medium"
-                                                                placeholder="Note regarding performance..."
+                                                                className="table-input py-2 px-3 font-medium text-gray-600 border-none bg-gray-50 focus:bg-white"
+                                                                placeholder="Note..."
                                                                 value={entry.remark}
                                                                 onChange={(e) => handleMarkChange(student.id, 'remark', e.target.value)}
                                                             />
                                                         </td>
-                                                        <td className="py-5 px-6 text-center">
-                                                            {entry.id ? (
-                                                                <div className="inline-flex flex-col items-center">
-                                                                    <div className="bg-green-100 text-green-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter">Verified</div>
-                                                                    <div className="text-[9px] text-gray-400 mt-1 uppercase font-bold">Record #{entry.id}</div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="bg-blue-50 text-blue-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter border border-blue-100 italic">Draft</div>
-                                                            )}
+                                                        <td align="center">
+                                                            <div className={`status-badge ${entry.id ? 'status-badge-saved' : 'status-badge-new'}`}>
+                                                                {entry.id ? <CheckCircle2 size={12} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
+                                                                <span className="text-[9px] font-black uppercase tracking-wider">{entry.id ? 'Saved' : 'Unsaved'}</span>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 );
@@ -493,18 +491,16 @@ const TeacherDashboard = () => {
                                 </table>
                             </div>
 
-                            <div className="p-8 bg-gray-50/50 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-gray-100">
-                                <div>
-                                    <h4 className="font-black text-gray-800 leading-none">Complete Mark Entry</h4>
-                                    <p className="text-sm text-gray-500 mt-2 font-medium">Please review all values before submitting to the ledger.</p>
+                            {students.length > 0 && (
+                                <div className="flex justify-end pt-4">
+                                    <button
+                                        className="btn-modern btn-primary px-8"
+                                        onClick={handleSaveAll}
+                                    >
+                                        <Save size={18} /> Commit Changes
+                                    </button>
                                 </div>
-                                <button
-                                    className="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-black text-lg shadow-xl shadow-indigo-200 hover:shadow-indigo-300 hover:bg-indigo-700 transform active:scale-95 transition-all flex items-center gap-3 w-full md:w-auto justify-center"
-                                    onClick={handleSaveAll}
-                                >
-                                    <CheckCircle2 size={24} /> Commit Changes
-                                </button>
-                            </div>
+                            )}
                         </div>
                     )}
                 </div>

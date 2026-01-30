@@ -54,7 +54,7 @@ public class UserRegistrationService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
         user.setActive(true);
-        user.setRequiresPasswordChange(false);
+        user.setRequiresPasswordChange(true);
 
         Users savedUser = usersRepo.save(user);
 
@@ -144,5 +144,14 @@ public class UserRegistrationService {
         }
 
         studentsRepo.save(student);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, String newPassword) {
+        Users user = usersRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setRequiresPasswordChange(false);
+        usersRepo.save(user);
     }
 }

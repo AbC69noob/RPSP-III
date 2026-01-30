@@ -12,8 +12,10 @@ public interface SubjectsRepository extends JpaRepository<Subjects, Long> {
         @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM subjects s " +
                         "WHERE s.active = 1 " +
                         "AND s.program_id = :programId " +
-                        "AND s.semester = :semester", nativeQuery = true)
+                        "AND s.semester = :semester " +
+                        "AND (:courseBatchId IS NULL OR s.course_batch_id = :courseBatchId)", nativeQuery = true)
         List<Subjects> findFilteredSubjects(
                         @Param("programId") Long programId,
-                        @Param("semester") Integer semester);
+                        @Param("semester") Integer semester,
+                        @Param("courseBatchId") Long courseBatchId);
 }

@@ -391,15 +391,18 @@ const UsersTab = () => {
                                         </div>
                                         <div className="form-group">
                                             <label className="label">Semester *</label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 name="semester"
-                                                placeholder="e.g. 1"
                                                 required
                                                 className="input-field"
                                                 value={formData.semester}
                                                 onChange={handleInputChange}
-                                            />
+                                            >
+                                                <option value="">Select Semester</option>
+                                                {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                                                    <option key={sem} value={sem}>Semester {sem}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <div className="form-group">
                                             <label className="label">Student Batch *</label>

@@ -148,13 +148,25 @@ button {
     white-space: nowrap;
 }
 
-.sidebar-brand span.brand-text {
+.brand-text-container {
+    display: flex;
+    flex-direction: column;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
 }
 
-.sidebar:hover .sidebar-brand span.brand-text {
+.sidebar:hover .brand-text-container {
     opacity: 1;
+}
+
+.user-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    font-weight: 600;
+    text-transform: lowercase;
+    opacity: 0.9;
+    margin-top: -2px;
 }
 
 .sidebar-nav {

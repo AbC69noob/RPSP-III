@@ -9,6 +9,7 @@ const TeachersTab = () => {
     const [teachers, setTeachers] = useState([]);
     const [programs, setPrograms] = useState([]);
     const [assignments, setAssignments] = useState([]);
+    const [courseBatches, setCourseBatches] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Filter states
@@ -28,16 +29,18 @@ const TeachersTab = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [subjectsRes, teachersRes, programsRes, assignmentsRes] = await Promise.all([
+            const [subjectsRes, teachersRes, programsRes, assignmentsRes, courseBatchesRes] = await Promise.all([
                 api.get('/subjects'),
                 api.get('/teachers'),
                 api.get('/programs'),
-                api.get('/teacher-subjects')
+                api.get('/teacher-subjects'),
+                api.get('/course-batches')
             ]);
             setSubjects(subjectsRes.data);
             setTeachers(teachersRes.data);
             setPrograms(programsRes.data);
             setAssignments(assignmentsRes.data);
+            setCourseBatches(courseBatchesRes.data);
         } catch (error) {
             console.error('Failed to fetch data:', error);
             toast.error('Failed to load data');
@@ -46,8 +49,8 @@ const TeachersTab = () => {
         }
     };
 
-    // Get unique batches from subjects
-    const uniqueBatches = [...new Set(subjects.map(s => s.batch).filter(Boolean))].sort((a, b) => b.localeCompare(a));
+    // Get sorted course revisions
+    const sortedCourseBatches = [...courseBatches].sort((a, b) => b.startYear - a.startYear);
 
     // Get the teacher ID assigned to a subject (if any)
     const getAssignedTeacherId = (subjectId) => {
@@ -71,8 +74,8 @@ const TeachersTab = () => {
         // Hide subjects assigned to OTHER teachers (not the selected teacher)
         if (isAssignedToOtherTeacher(subject.id)) return false;
 
-        // Apply batch filter
-        if (selectedBatch && subject.batch !== selectedBatch) return false;
+        // Apply Course Revision filter
+        if (selectedBatch && subject.courseBatch?.id !== Number(selectedBatch)) return false;
 
         // Apply program filter
         if (selectedProgram && subject.program?.id !== Number(selectedProgram)) return false;
@@ -128,7 +131,7 @@ const TeachersTab = () => {
             }
 
             // Apply filters
-            if (selectedBatch && subject.batch !== selectedBatch) return false;
+            if (selectedBatch && subject.courseBatch?.id !== Number(selectedBatch)) return false;
             if (selectedProgram && subject.program?.id !== Number(selectedProgram)) return false;
             if (selectedSemester && subject.semester !== Number(selectedSemester)) return false;
 
@@ -325,17 +328,17 @@ const TeachersTab = () => {
                         </select>
                     </div>
 
-                    {/* Batch Dropdown */}
+                    {/* Course Revision Dropdown */}
                     <div>
-                        <label className="label">Batch</label>
+                        <label className="label">Select Revised Course On</label>
                         <select
                             className="input-field"
                             value={selectedBatch}
                             onChange={(e) => setSelectedBatch(e.target.value)}
                         >
-                            <option value="">All Batches</option>
-                            {uniqueBatches.map(batch => (
-                                <option key={batch} value={batch}>{batch}</option>
+                            <option value="">All Revisions</option>
+                            {sortedCourseBatches.map(batch => (
+                                <option key={batch.id} value={batch.id}>Revised on {batch.startYear}</option>
                             ))}
                         </select>
                     </div>
@@ -423,7 +426,7 @@ const TeachersTab = () => {
                                             </th>
                                             <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase w-24">Code</th>
                                             <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Subject Name</th>
-                                            <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase w-32">Batch</th>
+                                            <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase w-32">Course Revision</th>
                                             <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase w-40">Program</th>
                                             <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase w-24">Semester</th>
                                             <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase w-32">Status</th>
@@ -446,7 +449,7 @@ const TeachersTab = () => {
                                                     </td>
                                                     <td className="py-3 px-4 text-sm font-mono text-gray-600">{subject.code}</td>
                                                     <td className="py-3 px-4 text-sm font-medium text-gray-800">{subject.name}</td>
-                                                    <td className="py-3 px-4 text-sm text-gray-600">{subject.batch || 'N/A'}</td>
+                                                    <td className="py-3 px-4 text-sm text-gray-600">{subject.courseBatch?.startYear ? `Revised on ${subject.courseBatch.startYear}` : 'N/A'}</td>
                                                     <td className="py-3 px-4 text-sm text-gray-600">{subject.program?.name || 'N/A'}</td>
                                                     <td className="py-3 px-4 text-sm text-gray-600">{subject.semester}</td>
                                                     <td className="py-3 px-4 text-sm">
