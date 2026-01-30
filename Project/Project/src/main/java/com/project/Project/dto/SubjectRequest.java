@@ -7,6 +7,7 @@ public class SubjectRequest {
     private Integer passMarks;
     private Integer semester;
     private Long programId;
+    private Long courseBatchId;
     private Long teacherId;
 
     // Getters and Setters
@@ -64,5 +65,13 @@ public class SubjectRequest {
 
     public void setTeacherId(Long teacherId) {
         this.teacherId = teacherId;
+    }
+
+    public Long getCourseBatchId() {
+        return courseBatchId;
+    }
+
+    public void setCourseBatchId(Long courseBatchId) {
+        this.courseBatchId = courseBatchId;
     }
 }

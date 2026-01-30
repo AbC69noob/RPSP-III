@@ -13,4 +13,8 @@ public interface StudentsRepository extends JpaRepository<Students, Long> {
 
         // Find students by program and semester
         List<Students> findByProgramIdAndSemester(Long programId, Integer semester);
+
+        // Find students by program, semester, and course revision (batch)
+        List<Students> findByProgramIdAndSemesterAndStudentBatchCourseBatchId(Long programId, Integer semester,
+                        Long courseBatchId);
 }

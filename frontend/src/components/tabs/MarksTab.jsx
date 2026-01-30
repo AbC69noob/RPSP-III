@@ -34,6 +34,26 @@ const MarksTab = () => {
 
     const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
+    // Grouping logic for teacher assignments
+    const groupedAssignments = React.useMemo(() => {
+        const groups = {};
+        teacherAssignments.forEach(asm => {
+            const batchId = asm.subject?.courseBatch?.id || 'no-batch';
+            const batchYear = asm.subject?.courseBatch?.startYear || 'Unknown Revision';
+            const programId = asm.studentProgram?.id || 'no-program';
+            const programName = asm.studentProgram?.name || 'Unknown Program';
+
+            if (!groups[batchId]) {
+                groups[batchId] = { year: batchYear, programs: {} };
+            }
+            if (!groups[batchId].programs[programId]) {
+                groups[batchId].programs[programId] = { name: programName, assignments: [] };
+            }
+            groups[batchId].programs[programId].assignments.push(asm);
+        });
+        return groups;
+    }, [teacherAssignments]);
+
     // Helper function to filter terms based on current date
     const getAvailableTerms = () => {
         const today = new Date();
@@ -108,7 +128,7 @@ const MarksTab = () => {
         setStudents([]);
         try {
             setLoadingStudents(true);
-            
+
             // Validate required parameters
             if (!assignment.studentProgram?.id || !assignment.studentSemester) {
                 console.error('Missing required assignment data:', {
@@ -120,18 +140,19 @@ const MarksTab = () => {
                 setLoadingStudents(false);
                 return;
             }
-            
-            // Use simple program and semester filtering
+
+            // Use program, semester, and courseBatchId filtering
             const response = await api.get('/students/filter', {
                 params: {
                     programId: assignment.studentProgram.id,
-                    semester: assignment.studentSemester
+                    semester: assignment.studentSemester,
+                    courseBatchId: assignment.subject?.courseBatch?.id
                 }
             });
             const filteredStudents = response.data;
             console.log('Fetched students:', filteredStudents);
             setStudents(filteredStudents);
-            
+
             if (filteredStudents.length === 0) {
                 console.warn('No students found for criteria:', {
                     batch: resolvedBatch,
@@ -402,139 +423,159 @@ const MarksTab = () => {
                         <h3 className="text-md font-bold text-gray-700 uppercase tracking-wider flex items-center mt-2 px-1">
                             <BookOpen size={18} className="mr-2" /> Your Assigned Subjects
                         </h3>
-                        {teacherAssignments.length === 0 ? (
+                        {Object.keys(groupedAssignments).length === 0 ? (
                             <div className="card text-center py-10 text-gray-500 bg-gray-50 border-dashed">
                                 <p>No subjects assigned to you yet.</p>
                             </div>
                         ) : (
-                            teacherAssignments.map((assignment) => (
-                                <div key={assignment.id} className={`subject-accordion-item ${expandedSubject === assignment.subject.id ? 'expanded' : ''}`}>
-                                    <div
-                                        className={`flex items-center justify-between p-4 cursor-pointer transition-all ${expandedSubject === assignment.subject.id ? 'bg-indigo-600 text-white rounded-t-lg' : 'bg-white hover:bg-gray-50 border rounded-lg shadow-sm'}`}
-                                        onClick={() => handleExpandSubject(assignment)}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-lg ${expandedSubject === assignment.subject.id ? 'bg-white/20' : 'bg-indigo-100 text-indigo-600'}`}>
-                                                <BookOpen size={20} />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-md">{assignment.subject.name} ({assignment.subject.code})</h4>
-                                                <div className={`flex items-center gap-3 text-xs mt-1 ${expandedSubject === assignment.subject.id ? 'text-indigo-100' : 'text-gray-500'}`}>
-                                                    <span className="flex items-center gap-1"><GraduationCap size={14} /> {assignment.studentProgram?.name}</span>
-                                                    <span>•</span>
-                                                    <span>Batch: {assignment.studentBatch}</span>
-                                                    <span>•</span>
-                                                    <span>Semester: {assignment.studentSemester}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            {expandedSubject === assignment.subject.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                        </div>
+                            Object.entries(groupedAssignments).map(([batchId, batchData]) => (
+                                <div key={batchId} className="space-y-4 mb-8">
+                                    <div className="flex items-center gap-3 px-3 border-l-4 border-indigo-600 py-2 bg-indigo-50/50 rounded-r-lg">
+                                        <Calendar size={20} className="text-indigo-600" />
+                                        <h4 className="text-lg font-bold text-indigo-900">
+                                            Course Revised on {batchData.year}
+                                        </h4>
                                     </div>
 
-                                    {expandedSubject === assignment.subject.id && (
-                                        <div className="bg-white border-x border-b rounded-b-lg p-6 animate-fadeIn">
-                                            {!selectedTerm ? (
-                                                <div className="text-center py-6 text-amber-600">
-                                                    Please select a term above to view students.
-                                                </div>
-                                            ) : loadingStudents ? (
-                                                <div className="text-center py-10">
-                                                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent"></div>
-                                                    <p className="mt-2 text-gray-500">Loading student list...</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
-                                                        <h5 className="font-bold text-gray-700 flex items-center">
-                                                            <TableIcon size={18} className="mr-2" /> Student List
-                                                        </h5>
-                                                        <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-medium">
-                                                            {students.length} Students
-                                                        </span>
-                                                    </div>
+                                    {Object.entries(batchData.programs).map(([programId, programData]) => (
+                                        <div key={programId} className="ml-2 md:ml-6 space-y-3">
+                                            <div className="flex items-center gap-3 text-gray-700 font-bold border-b border-gray-100 pb-2 mb-2">
+                                                <GraduationCap size={20} className="text-indigo-500" />
+                                                <span className="uppercase tracking-wide text-sm">{programData.name}</span>
+                                            </div>
 
-                                                    <div className="table-container border rounded-lg overflow-hidden">
-                                                        <table className="w-full">
-                                                            <thead className="bg-gray-50 border-b">
-                                                                <tr>
-                                                                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Roll No</th>
-                                                                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Student Name</th>
-                                                                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Obtained Marks</th>
-                                                                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Remark</th>
-                                                                    <th className="py-3 px-4 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody className="divide-y divide-gray-100">
-                                                                {students.length === 0 ? (
-                                                                    <tr>
-                                                                        <td colSpan="5" className="py-10 text-center text-gray-500 italic">No students found matching this criteria.</td>
-                                                                    </tr>
-                                                                ) : (
-                                                                    students.map((student) => {
-                                                                        const entry = marksEntry[student.id] || {};
-                                                                        return (
-                                                                            <tr key={student.id} className="hover:bg-gray-50 transition-colors">
-                                                                                <td className="py-4 px-4 text-sm font-medium text-gray-600">{student.rollNo}</td>
-                                                                                <td className="py-4 px-4 text-sm font-bold text-gray-900">{student.name}</td>
-                                                                                <td className="py-2 px-4">
-                                                                                    <div className="relative">
-                                                                                        <input
-                                                                                            type="number"
-                                                                                            step="0.01"
-                                                                                            className="w-32 border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                                                                            placeholder="0.00"
-                                                                                            value={entry.obtainedMarks}
-                                                                                            onChange={(e) => handleMarkChange(student.id, 'obtainedMarks', e.target.value)}
-                                                                                        />
-                                                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">/ {assignment.subject.fullMark}</span>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td className="py-2 px-4">
-                                                                                    <input
-                                                                                        type="text"
-                                                                                        className="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                                                                        placeholder="Optional remark"
-                                                                                        value={entry.remark}
-                                                                                        onChange={(e) => handleMarkChange(student.id, 'remark', e.target.value)}
-                                                                                    />
-                                                                                </td>
-                                                                                <td className="py-4 px-4 text-center">
-                                                                                    {entry.id ? (
-                                                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                                                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
-                                                                                            Saved
-                                                                                        </span>
-                                                                                    ) : (
-                                                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
-                                                                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mr-1.5"></span>
-                                                                                            New
-                                                                                        </span>
-                                                                                    )}
-                                                                                </td>
-                                                                            </tr>
-                                                                        );
-                                                                    })
-                                                                )}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-
-                                                    {students.length > 0 && (
-                                                        <div className="flex justify-end pt-4 border-t">
-                                                            <button
-                                                                className="btn btn-primary shadow-lg shadow-indigo-100 flex items-center gap-2"
-                                                                onClick={handleSaveAll}
-                                                            >
-                                                                <TableIcon size={18} /> Save All Marks
-                                                            </button>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {programData.assignments.map((assignment) => (
+                                                    <div key={assignment.id} className={`subject-accordion-item ${expandedSubject === assignment.subject.id ? 'expanded' : ''}`}>
+                                                        <div
+                                                            className={`flex items-center justify-between p-4 cursor-pointer transition-all ${expandedSubject === assignment.subject.id ? 'bg-indigo-600 text-white rounded-t-lg' : 'bg-white hover:bg-gray-50 border rounded-lg shadow-sm border-gray-200'}`}
+                                                            onClick={() => handleExpandSubject(assignment)}
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div className={`p-2 rounded-lg ${expandedSubject === assignment.subject.id ? 'bg-white/20' : 'bg-indigo-50 text-indigo-600'}`}>
+                                                                    <BookOpen size={20} />
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-bold text-md">{assignment.subject.name}</h4>
+                                                                    <div className={`flex items-center gap-3 text-xs mt-1 ${expandedSubject === assignment.subject.id ? 'text-indigo-100' : 'text-gray-500'}`}>
+                                                                        <span className="font-medium bg-gray-100 text-gray-800 px-2 py-0.5 rounded" style={expandedSubject === assignment.subject.id ? { backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' } : {}}>{assignment.subject.code}</span>
+                                                                        <span>•</span>
+                                                                        <span className="flex items-center gap-1">Semester: {assignment.studentSemester}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                {expandedSubject === assignment.subject.id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            )}
+
+                                                        {expandedSubject === assignment.subject.id && (
+                                                            <div className="bg-white border-x border-b rounded-b-lg p-6 animate-fadeIn shadow-inner">
+                                                                {!selectedTerm ? (
+                                                                    <div className="text-center py-6 text-amber-600 bg-amber-50 rounded-lg border border-amber-100">
+                                                                        Please select a term above to view students.
+                                                                    </div>
+                                                                ) : loadingStudents ? (
+                                                                    <div className="text-center py-10">
+                                                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent"></div>
+                                                                        <p className="mt-2 text-gray-500 font-medium">Loading student list...</p>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="space-y-4">
+                                                                        <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                                                            <h5 className="font-bold text-gray-700 flex items-center gap-2">
+                                                                                <TableIcon size={18} className="text-indigo-500" /> Student List - {assignment.subject.name}
+                                                                            </h5>
+                                                                            <span className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">
+                                                                                {students.length} Students
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div className="table-container border rounded-lg overflow-hidden shadow-sm">
+                                                                            <table className="w-full">
+                                                                                <thead className="bg-gray-100 border-b">
+                                                                                    <tr>
+                                                                                        <th className="py-3 px-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Roll No</th>
+                                                                                        <th className="py-3 px-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Student Name</th>
+                                                                                        <th className="py-3 px-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Obtained Marks</th>
+                                                                                        <th className="py-3 px-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remark</th>
+                                                                                        <th className="py-3 px-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody className="divide-y divide-gray-100">
+                                                                                    {students.length === 0 ? (
+                                                                                        <tr>
+                                                                                            <td colSpan="5" className="py-12 text-center text-gray-400 italic bg-gray-50/50">No students found matching this subject's revision and program.</td>
+                                                                                        </tr>
+                                                                                    ) : (
+                                                                                        students.map((student) => {
+                                                                                            const entry = marksEntry[student.id] || {};
+                                                                                            return (
+                                                                                                <tr key={student.id} className="hover:bg-indigo-50/30 transition-colors">
+                                                                                                    <td className="py-4 px-4 text-sm font-bold text-gray-500">{student.rollNo}</td>
+                                                                                                    <td className="py-4 px-4 text-sm font-bold text-gray-900">{student.name}</td>
+                                                                                                    <td className="py-2 px-4">
+                                                                                                        <div className="relative inline-block">
+                                                                                                            <input
+                                                                                                                type="number"
+                                                                                                                step="0.01"
+                                                                                                                className="w-36 border border-gray-300 rounded-lg p-2 pr-14 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-bold"
+                                                                                                                placeholder="0.00"
+                                                                                                                value={entry.obtainedMarks}
+                                                                                                                onChange={(e) => handleMarkChange(student.id, 'obtainedMarks', e.target.value)}
+                                                                                                            />
+                                                                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-400 font-bold uppercase">/ {assignment.subject.fullMark}</span>
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                    <td className="py-2 px-4">
+                                                                                                        <input
+                                                                                                            type="text"
+                                                                                                            className="w-full border border-gray-300 rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                                                                                            placeholder="Optional remark"
+                                                                                                            value={entry.remark}
+                                                                                                            onChange={(e) => handleMarkChange(student.id, 'remark', e.target.value)}
+                                                                                                        />
+                                                                                                    </td>
+                                                                                                    <td className="py-4 px-4 text-center">
+                                                                                                        {entry.id ? (
+                                                                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase bg-green-100 text-green-700 border border-green-200">
+                                                                                                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
+                                                                                                                Saved
+                                                                                                            </span>
+                                                                                                        ) : (
+                                                                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase bg-blue-50 text-blue-600 border border-blue-100">
+                                                                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mr-1.5"></span>
+                                                                                                                New
+                                                                                                            </span>
+                                                                                                        )}
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            );
+                                                                                        })
+                                                                                    )}
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+
+                                                                        {students.length > 0 && (
+                                                                            <div className="flex justify-end pt-4 border-t border-gray-100">
+                                                                                <button
+                                                                                    className="btn btn-primary shadow-lg shadow-indigo-200 flex items-center gap-2 group transform active:scale-95 transition-all"
+                                                                                    onClick={handleSaveAll}
+                                                                                >
+                                                                                    <Plus size={18} className="group-hover:rotate-90 transition-transform" /> Save All Marks for {assignment.subject.name}
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
                             ))
                         )}

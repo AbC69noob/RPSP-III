@@ -12,6 +12,7 @@ import TermsTab from './components/tabs/TermsTab';
 import FacultiesTab from './components/tabs/FacultiesTab';
 import TeachersTab from './components/tabs/TeachersTab';
 import MarksTab from './components/tabs/MarksTab';
+import TeacherDashboard from './pages/TeacherDashboard';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -26,7 +27,7 @@ const ProtectedRoute = ({ children }) => {
 const AdminDashboardWrapper = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   if (user.role === 'teacher') {
-    return <Navigate to="/dashboard/marks" replace />;
+    return <Navigate to="/dashboard/teacher" replace />;
   }
   return <AdminDashboard><Outlet /></AdminDashboard>;
 };
@@ -34,7 +35,7 @@ const AdminDashboardWrapper = () => {
 const DashboardIndex = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   if (user.role === 'teacher') {
-    return <Navigate to="marks" replace />;
+    return <Navigate to="teacher" replace />;
   }
   return <Navigate to="users" replace />;
 };
@@ -57,6 +58,9 @@ const App = () => {
         >
           {/* Default redirect */}
           <Route index element={<DashboardIndex />} />
+
+          {/* Teacher Dashboard */}
+          <Route path="teacher" element={<TeacherDashboard />} />
 
           {/* Marks Tab (Accessible by both) */}
           <Route path="marks" element={<MarksTab />} />

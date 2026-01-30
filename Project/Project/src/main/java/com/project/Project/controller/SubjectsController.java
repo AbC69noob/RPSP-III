@@ -26,15 +26,18 @@ public class SubjectsController {
     private final ProgramsRepository programsRepo;
     private final TeachersRepository teachersRepo;
     private final TeacherSubjectsRepository teacherSubjectsRepo;
+    private final com.project.Project.repository.CourseBatchRepository courseBatchRepo;
 
     public SubjectsController(SubjectsRepository repo,
             ProgramsRepository programsRepo,
             TeachersRepository teachersRepo,
-            TeacherSubjectsRepository teacherSubjectsRepo) {
+            TeacherSubjectsRepository teacherSubjectsRepo,
+            com.project.Project.repository.CourseBatchRepository courseBatchRepo) {
         this.repo = repo;
         this.programsRepo = programsRepo;
         this.teachersRepo = teachersRepo;
         this.teacherSubjectsRepo = teacherSubjectsRepo;
+        this.courseBatchRepo = courseBatchRepo;
     }
 
     // ADMIN + TEACHER can view
@@ -74,11 +77,19 @@ public class SubjectsController {
         subject.setPassMarks(request.getPassMarks());
         subject.setSemester(request.getSemester());
         subject.setProgram(program);
+
+        // 3. Fetch Course Batch if provided
+        if (request.getCourseBatchId() != null) {
+            com.project.Project.model.CourseBatch courseBatch = courseBatchRepo.findById(request.getCourseBatchId())
+                    .orElseThrow(() -> new RuntimeException("Course Batch not found"));
+            subject.setCourseBatch(courseBatch);
+        }
+
         subject.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
 
         Subjects savedSubject = repo.save(subject);
 
-        // 3. Assign Teacher if provided
+        // 4. Assign Teacher if provided
         if (request.getTeacherId() != null) {
             Teachers teacher = teachersRepo.findById(request.getTeacherId())
                     .orElseThrow(() -> new RuntimeException("Teacher not found"));

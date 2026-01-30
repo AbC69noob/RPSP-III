@@ -19,6 +19,10 @@ public class Subjects {
     @JoinColumn(name = "program_id")
     private Programs program;
 
+    @ManyToOne
+    @JoinColumn(name = "course_batch_id")
+    private CourseBatch courseBatch;
+
     @Column(name = "full_mark")
     private Integer fullMark;
 
@@ -99,6 +103,14 @@ public class Subjects {
 
     public void setProgram(Programs program) {
         this.program = program;
+    }
+
+    public CourseBatch getCourseBatch() {
+        return courseBatch;
+    }
+
+    public void setCourseBatch(CourseBatch courseBatch) {
+        this.courseBatch = courseBatch;
     }
 
     public void setCreatedAt(Timestamp createdAt) {

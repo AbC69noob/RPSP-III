@@ -26,10 +26,12 @@ public class StudentsController {
     @GetMapping("/filter")
     public ResponseEntity<List<Students>> getFilteredStudents(
             @RequestParam Long programId,
-            @RequestParam Integer semester) {
+            @RequestParam Integer semester,
+            @RequestParam(required = false) Long courseBatchId) {
 
         // Log the incoming parameters for debugging
-        System.out.println("Filtering students with: programId=" + programId + ", semester=" + semester);
+        System.out.println("Filtering students with: programId=" + programId + ", semester=" + semester
+                + ", courseBatchId=" + courseBatchId);
 
         // Validate required parameters
         if (programId == null) {
@@ -39,7 +41,13 @@ public class StudentsController {
             throw new RuntimeException("Semester parameter is required");
         }
 
-        List<Students> students = repo.findByProgramIdAndSemester(programId, semester);
+        List<Students> students;
+        if (courseBatchId != null) {
+            students = repo.findByProgramIdAndSemesterAndStudentBatchCourseBatchId(programId, semester, courseBatchId);
+        } else {
+            students = repo.findByProgramIdAndSemester(programId, semester);
+        }
+
         System.out.println("Found " + students.size() + " students matching criteria");
 
         return ResponseEntity.ok(students);
