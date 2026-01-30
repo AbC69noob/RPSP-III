@@ -1,28 +1,23 @@
 package com.project.Project.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import java.util.List;
 
 @Entity
-@Table(name = "student_batches")
+@Table(name = "student_batch")
 public class StudentBatch {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String name; // e.g., "2021 Fall"
+    @Column(nullable = false)
+    private String name;
 
     @ManyToOne
-    @JoinColumn(name = "course_batch_id")
+    @JoinColumn(name = "course_batch_id", nullable = false)
     private CourseBatch courseBatch;
 
-    @OneToMany(mappedBy = "studentBatch")
-    @JsonIgnore
-    private List<Students> students;
-
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -45,13 +40,5 @@ public class StudentBatch {
 
     public void setCourseBatch(CourseBatch courseBatch) {
         this.courseBatch = courseBatch;
-    }
-
-    public List<Students> getStudents() {
-        return students;
-    }
-
-    public void setStudents(List<Students> students) {
-        this.students = students;
     }
 }

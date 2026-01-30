@@ -86,7 +86,7 @@ const UsersTab = () => {
 
     const fetchCourseBatches = async () => {
         try {
-            const response = await api.get('/api/admin/course-batches');
+            const response = await api.get('/course-batches');
             setCourseBatches(response.data);
         } catch (error) {
             console.error('Failed to fetch course batches:', error);
@@ -128,7 +128,7 @@ const UsersTab = () => {
         try {
             await api.post('/student-batches', {
                 name: batchForm.name,
-                courseBatch: { id: batchForm.courseBatchId } // Backend expects CourseBatch object or ID handling
+                courseBatchId: Number(batchForm.courseBatchId)
             });
             toast.success('Student Batch created successfully');
             setShowBatchModal(false);
@@ -160,7 +160,7 @@ const UsersTab = () => {
                     permanentAddress: formData.permanentAddress,
                     temporaryAddress: formData.temporaryAddress,
                     rollNo: formData.rollNo ? Number(formData.rollNo) : null,
-                    studentBatchId: formData.studentBatchId ? Number(formData.studentBatchId) : null,
+                    batchId: formData.studentBatchId ? Number(formData.studentBatchId) : null,
                     semester: formData.semester ? Number(formData.semester) : null,
                     programId: formData.programId ? Number(formData.programId) : null
                 };
@@ -623,7 +623,7 @@ const UsersTab = () => {
                                         <option value="">Select Course Revision</option>
                                         {courseBatches.map(cb => (
                                             <option key={cb.id} value={cb.id}>
-                                                {cb.program?.name} - {cb.batchYear} ({cb.remarks})
+                                                Batch Year: {cb.startYear} {cb.description ? `(${cb.description})` : ''}
                                             </option>
                                         ))}
                                     </select>

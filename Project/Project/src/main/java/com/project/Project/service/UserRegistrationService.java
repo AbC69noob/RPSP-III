@@ -11,6 +11,7 @@ import com.project.Project.repository.StudentsRepository;
 import com.project.Project.repository.UsersRepository;
 import com.project.Project.repository.ProgramsRepository;
 import com.project.Project.repository.StudentBatchRepository;
+import com.project.Project.model.StudentBatch;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -118,13 +119,6 @@ public class UserRegistrationService {
         student.setUser(user);
         student.setName(request.getUsername());
         student.setRollNo(request.getRollNo());
-
-        // Remove studentBatch assignment since we removed it from Students model
-        if (request.getStudentBatchId() != null) {
-            studentBatchRepo.findById(request.getStudentBatchId())
-                    .ifPresent(student::setStudentBatch);
-        }
-
         student.setSemester(request.getSemester() != null ? request.getSemester() : 1);
         student.setPermanentAddress(request.getPermanentAddress());
         student.setTemporaryAddress(request.getTemporaryAddress());
@@ -141,7 +135,14 @@ public class UserRegistrationService {
             student.setProgram(program);
         }
 
+        // Assign student batch if batchId is provided
+        if (request.getBatchId() != null) {
+            StudentBatch batch = studentBatchRepo.findById(request.getBatchId())
+                    .orElseThrow(
+                            () -> new RuntimeException("Student Batch not found with id: " + request.getBatchId()));
+            student.setStudentBatch(batch);
+        }
+
         studentsRepo.save(student);
     }
-
 }

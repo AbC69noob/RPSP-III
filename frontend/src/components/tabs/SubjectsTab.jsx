@@ -33,8 +33,8 @@ const SubjectsTab = () => {
     });
 
     const [revisionForm, setRevisionForm] = useState({
-        batchYear: '',
-        remarks: ''
+        startYear: '',
+        description: ''
     });
 
     useEffect(() => {
@@ -49,7 +49,7 @@ const SubjectsTab = () => {
                 api.get('/programs'),
                 api.get('/teachers'),
                 api.get('/teacher-subjects'),
-                api.get('/api/admin/course-batches')
+                api.get('/course-batches')
             ]);
             setSubjects(subjectsRes.data);
             setPrograms(programsRes.data);
@@ -68,13 +68,13 @@ const SubjectsTab = () => {
     const handleCreateRevision = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/api/admin/course-batches', {
-                ...revisionForm,
-                batchYear: Number(revisionForm.batchYear)
+            await api.post('/course-batches', {
+                startYear: Number(revisionForm.startYear),
+                description: revisionForm.description
             });
-            toast.success('Course Revision created successfully');
+            toast.success('Course Batch created successfully');
             setShowRevisionModal(false);
-            setRevisionForm({ batchYear: '', remarks: '' });
+            setRevisionForm({ startYear: '', description: '' });
             fetchData();
         } catch (error) {
             console.error('Failed to create revision:', error);
@@ -166,7 +166,7 @@ const SubjectsTab = () => {
     // --- Helpers ---
     const getBatchName = (batch) => {
         if (!batch) return 'Unknown Batch';
-        return `${batch.program?.name || 'Unknown'} - ${batch.batchYear} (${batch.remarks || ''})`;
+        return `Batch ${batch.startYear} ${batch.description ? `(${batch.description})` : ''}`;
     };
 
     // Grouping Logic: CourseBatch -> Program -> Semester
@@ -208,7 +208,7 @@ const SubjectsTab = () => {
                     </div>
                 )}
 
-                {courseBatches.sort((a, b) => b.batchYear - a.batchYear).map(batch => {
+                {courseBatches.sort((a, b) => b.startYear - a.startYear).map(batch => {
                     // Determine which programs to show for this batch
                     // If batch has specific program, show only that. Else show ALL programs.
                     const programsForBatch = batch.program ? [batch.program] : programs;
@@ -218,7 +218,7 @@ const SubjectsTab = () => {
                             {/* Batch Header */}
                             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
                                 <h2 className="text-xl font-bold text-gray-800">
-                                    Course Revised on {batch.batchYear} <span className="text-sm font-normal text-gray-500">({batch.remarks || 'No remarks'})</span>
+                                    Batch {batch.startYear} <span className="text-sm font-normal text-gray-500">({batch.description || 'No description'})</span>
                                 </h2>
                             </div>
 
@@ -323,16 +323,16 @@ const SubjectsTab = () => {
                         </div>
                         <form onSubmit={handleCreateRevision} className="modal-body space-y-4">
                             <div className="form-group">
-                                <label className="label">Current Year *</label>
+                                <label className="label">Start Year *</label>
                                 <input type="number" required className="input-field" placeholder="2023"
-                                    value={revisionForm.batchYear}
-                                    onChange={e => setRevisionForm({ ...revisionForm, batchYear: e.target.value })} />
+                                    value={revisionForm.startYear}
+                                    onChange={e => setRevisionForm({ ...revisionForm, startYear: e.target.value })} />
                             </div>
                             <div className="form-group">
-                                <label className="label">Remarks</label>
+                                <label className="label">Description</label>
                                 <textarea className="input-field" rows="3" placeholder="e.g., Updated curriculum as per 2023 guidelines"
-                                    value={revisionForm.remarks}
-                                    onChange={e => setRevisionForm({ ...revisionForm, remarks: e.target.value })}
+                                    value={revisionForm.description}
+                                    onChange={e => setRevisionForm({ ...revisionForm, description: e.target.value })}
                                 />
                             </div>
                             <div className="modal-footer">

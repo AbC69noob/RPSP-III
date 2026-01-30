@@ -1,63 +1,33 @@
 package com.project.Project.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.project.Project.model.Role;
 import com.project.Project.model.Gender;
 
 public class UserRequest {
 
-    // ================= COMMON FIELDS =================
     private String username;
     private String email;
     private String password;
     private Role role;
 
-    @JsonProperty("permanent_address")
+    // Teacher fields
+    private String employeeId;
+    private String qualifications;
     private String permanentAddress;
-
-    @JsonProperty("temporary_address")
     private String temporaryAddress;
+    private String contactNo;
     private Gender gender;
     private String dob; // yyyy-MM-dd
 
-    // ================= TEACHER FIELDS =================
-    private String employeeId;
-    private String qualifications;
-    private String contactNo;
-
-    // ================= STUDENT FIELDS =================
-    // ================= STUDENT FIELDS =================
-    @JsonProperty("roll_no")
+    // Student fields
     private Long rollNo;
     private Integer semester;
-    private Long courseBatchId; // 🔥 REQUIRED for students
-    private String name;
-    // 🔥 student full name
-    @JsonProperty("program_id") // 🔥 student batch
-    private Long programId;
+    private Long programId; // optional, to assign program
+    private Long batchId; // student batch id
 
-    @JsonProperty("student_batch_id")
-    private Long studentBatchId;
-    // ================= GETTERS & SETTERS =================
-
+    // ===== Getters and Setters =====
     public String getUsername() {
         return username;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Long getProgramId() {
-        return programId;
-    }
-
-    public void setProgramId(Long programId) {
-        this.programId = programId;
     }
 
     public void setUsername(String username) {
@@ -88,6 +58,22 @@ public class UserRequest {
         this.role = role;
     }
 
+    public String getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public String getQualifications() {
+        return qualifications;
+    }
+
+    public void setQualifications(String qualifications) {
+        this.qualifications = qualifications;
+    }
+
     public String getPermanentAddress() {
         return permanentAddress;
     }
@@ -102,6 +88,14 @@ public class UserRequest {
 
     public void setTemporaryAddress(String temporaryAddress) {
         this.temporaryAddress = temporaryAddress;
+    }
+
+    public String getContactNo() {
+        return contactNo;
+    }
+
+    public void setContactNo(String contactNo) {
+        this.contactNo = contactNo;
     }
 
     public Gender getGender() {
@@ -120,32 +114,6 @@ public class UserRequest {
         this.dob = dob;
     }
 
-    // ---------- Teacher ----------
-    public String getEmployeeId() {
-        return employeeId;
-    }
-
-    public void setEmployeeId(String employeeId) {
-        this.employeeId = employeeId;
-    }
-
-    public String getQualifications() {
-        return qualifications;
-    }
-
-    public void setQualifications(String qualifications) {
-        this.qualifications = qualifications;
-    }
-
-    public String getContactNo() {
-        return contactNo;
-    }
-
-    public void setContactNo(String contactNo) {
-        this.contactNo = contactNo;
-    }
-
-    // ---------- Student ----------
     public Long getRollNo() {
         return rollNo;
     }
@@ -162,19 +130,19 @@ public class UserRequest {
         this.semester = semester;
     }
 
-    public Long getCourseBatchId() {
-        return courseBatchId;
+    public Long getProgramId() {
+        return programId;
     }
 
-    public void setCourseBatchId(Long courseBatchId) {
-        this.courseBatchId = courseBatchId;
+    public void setProgramId(Long programId) {
+        this.programId = programId;
     }
 
-    public Long getStudentBatchId() {
-        return studentBatchId;
+    public Long getBatchId() {
+        return batchId;
     }
 
-    public void setStudentBatchId(Long studentBatchId) {
-        this.studentBatchId = studentBatchId;
+    public void setBatchId(Long batchId) {
+        this.batchId = batchId;
     }
 }

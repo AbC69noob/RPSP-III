@@ -1,10 +1,7 @@
 package com.project.Project.controller;
 
-import com.project.Project.dto.UpdateStudentRequest;
 import com.project.Project.model.Students;
-import com.project.Project.model.Users;
 import com.project.Project.repository.StudentsRepository;
-import com.project.Project.repository.UsersRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,74 +11,67 @@ import java.util.List;
 @RequestMapping("/students")
 public class StudentsController {
 
-        private final StudentsRepository repo;
-        private final UsersRepository usersRepository;
+    private final StudentsRepository repo;
 
-        public StudentsController(
-                        StudentsRepository repo,
-                        UsersRepository usersRepository) {
-                this.repo = repo;
-                this.usersRepository = usersRepository;
+    public StudentsController(StudentsRepository repo) {
+        this.repo = repo;
+    }
+
+    // ================= GET ALL STUDENTS =================
+    @GetMapping
+    public ResponseEntity<List<Students>> getAllStudents() {
+        return ResponseEntity.ok(repo.findAll());
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<Students>> getFilteredStudents(
+            @RequestParam Long programId,
+            @RequestParam Integer semester) {
+
+        // Log the incoming parameters for debugging
+        System.out.println("Filtering students with: programId=" + programId + ", semester=" + semester);
+
+        // Validate required parameters
+        if (programId == null) {
+            throw new RuntimeException("Program ID parameter is required");
+        }
+        if (semester == null) {
+            throw new RuntimeException("Semester parameter is required");
         }
 
-        // ================= GET ALL STUDENTS =================
-        @GetMapping
-        public ResponseEntity<List<Students>> getAllStudents() {
-                return ResponseEntity.ok(repo.findAll());
-        }
+        List<Students> students = repo.findByProgramIdAndSemester(programId, semester);
+        System.out.println("Found " + students.size() + " students matching criteria");
 
-        // ================= FILTER BY COURSE BATCH & SEMESTER =================
-        @GetMapping("/filter")
-        public ResponseEntity<List<Students>> getFilteredStudents(
-                        @RequestParam Long programId,
-                        @RequestParam Integer semester) {
-                return ResponseEntity.ok(
-                                repo.findByProgramIdAndSemester(programId, semester));
-        }
+        return ResponseEntity.ok(students);
+    }
 
-        // ================= GET STUDENT BY ID =================
-        @GetMapping("/{id}")
-        public ResponseEntity<Students> getById(@PathVariable Long id) {
-                Students student = repo.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Student not found"));
-                return ResponseEntity.ok(student);
-        }
+    // ================= GET STUDENT BY ID =================
+    @GetMapping("/{id}")
+    public ResponseEntity<Students> getById(@PathVariable Long id) {
+        Students student = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        return ResponseEntity.ok(student);
+    }
 
-        @PostMapping("/create")
-        public ResponseEntity<Students> createStudent(
-                        @RequestBody UpdateStudentRequest request) {
-                Users user = usersRepository.findById(request.getUserId())
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+    // ================= UPDATE STUDENT PROFILE =================
+    @PutMapping("/{id}")
+    public ResponseEntity<Students> updateStudent(
+            @PathVariable Long id,
+            @RequestBody Students updated) {
+        Students student = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
-                Students student = new Students();
-                student.setUser(user);
-                student.setName(request.getName());
-                student.setGender(request.getGender());
-                student.setDob(request.getDob());
-                student.setRollNo(request.getRollNo());
-                student.setSemester(request.getSemester());
-                student.setPermanentAddress(request.getPermanentAddress());
-                student.setTemporaryAddress(request.getTemporaryAddress());
+        // Update all allowed fields
+        student.setName(updated.getName());
+        student.setRollNo(updated.getRollNo());
+        student.setSemester(updated.getSemester());
+        student.setProgram(updated.getProgram());
+        student.setPermanentAddress(updated.getPermanentAddress());
+        student.setTemporaryAddress(updated.getTemporaryAddress());
+        student.setGender(updated.getGender());
+        student.setDob(updated.getDob());
 
-                return ResponseEntity.ok(repo.save(student));
-        }
-
-        // ================= UPDATE STUDENT =================
-        @PutMapping("/{id}")
-        public ResponseEntity<Students> updateStudent(
-                        @PathVariable Long id,
-                        @RequestBody UpdateStudentRequest request) {
-                Students student = repo.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-                student.setName(request.getName());
-                student.setRollNo(request.getRollNo());
-                student.setSemester(request.getSemester());
-                student.setPermanentAddress(request.getPermanentAddress());
-                student.setTemporaryAddress(request.getTemporaryAddress());
-                student.setGender(request.getGender());
-                student.setDob(request.getDob());
-
-                return ResponseEntity.ok(repo.save(student));
-        }
+        Students saved = repo.save(student);
+        return ResponseEntity.ok(saved);
+    }
 }

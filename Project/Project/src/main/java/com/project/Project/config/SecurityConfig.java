@@ -29,95 +29,90 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
-    private final JwtUtils jwtUtils;
+        private final CustomUserDetailsService userDetailsService;
+        private final JwtUtils jwtUtils;
 
-    public SecurityConfig(CustomUserDetailsService userDetailsService,
-                          JwtUtils jwtUtils) {
-        this.userDetailsService = userDetailsService;
-        this.jwtUtils = jwtUtils;
-    }
+        public SecurityConfig(CustomUserDetailsService userDetailsService,
+                        JwtUtils jwtUtils) {
+                this.userDetailsService = userDetailsService;
+                this.jwtUtils = jwtUtils;
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(
+                        AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http,
-                                           AuthenticationConfiguration authConfig) throws Exception {
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http,
+                        AuthenticationConfiguration authConfig) throws Exception {
 
-        AuthenticationManager authManager = authConfig.getAuthenticationManager();
+                AuthenticationManager authManager = authConfig.getAuthenticationManager();
 
-        JwtAuthenticationFilter jwtAuthFilter = new JwtAuthenticationFilter(authManager, jwtUtils);
-        JwtAuthorizationFilter jwtAuthzFilter = new JwtAuthorizationFilter(jwtUtils, userDetailsService);
+                JwtAuthenticationFilter jwtAuthFilter = new JwtAuthenticationFilter(authManager, jwtUtils);
+                JwtAuthorizationFilter jwtAuthzFilter = new JwtAuthorizationFilter(jwtUtils, userDetailsService);
 
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        // PUBLIC
-                        .requestMatchers(
-                                "/login",
-                                "/auth/**",
-                                "/subjects/**",
-                                "/programs/**",
-                                "/terms/**",
-                                "/auth/forgot-password",
-                                "/auth/verify-otp",
-                                "/faculties/**",
-                                "/auth/reset-password")
-                        .permitAll()
-                        //.requestMatchers("/users/create").permitAll()
+                http
+                                .csrf(csrf -> csrf.disable())
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .authorizeHttpRequests(auth -> auth
+                                                // PUBLIC
+                                                .requestMatchers(
+                                                                "/login",
+                                                                "/auth/**",
+                                                                "/profile")
+                                                .permitAll()
+                                                // .requestMatchers("/users/create").permitAll()
 
-                        // ADMIN ONLY
-                        .requestMatchers(
-                                "/users/**",
-                                "/faculties/**",
-                                "/student-results/**")
-                        .hasAuthority("admin")
+                                                // ADMIN ONLY
+                                                .requestMatchers(
+                                                                "/users/**",
+                                                                "/faculties/**",
+                                                                "/student-results/**")
+                                                .hasAuthority("admin")
 
-                        .requestMatchers(HttpMethod.POST, "/marks/bulk").hasAnyAuthority("teacher", "admin")
+                                                // ADMIN + TEACHER
+                                                .requestMatchers(
+                                                                "/students/**",
+                                                                "/subjects/**",
+                                                                "/teachers/**",
+                                                                "/programs/**",
+                                                                "/terms/**",
+                                                                "/marks/**",
+                                                                "/course-batches",
+                                                                "/course-batches/**",
+                                                                "/student-batches",
+                                                                "/student-batches/**",
+                                                                "/teacher-subjects/**")
+                                                .hasAnyAuthority("admin", "teacher")
 
-                        // ADMIN + TEACHER
-                        .requestMatchers(
-                                "/students/**",
-                                "/subjects/**",
-                                "/teachers/**",
-                                "/programs/**",
-                                "/terms/**",
-                                "/marks/**"
-                        )
-                        .hasAnyAuthority("admin", "teacher")
+                                                .anyRequest().authenticated())
+                                // JWT AUTHORIZATION FIRST
+                                .addFilterBefore(jwtAuthzFilter, UsernamePasswordAuthenticationFilter.class)
+                                // LOGIN FILTER EXACTLY AT USERNAME/PASSWORD SLOT
+                                .addFilterAt(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
+                return http.build();
+        }
 
-                        .anyRequest().authenticated())
-                // JWT AUTHORIZATION FIRST
-                .addFilterBefore(jwtAuthzFilter, UsernamePasswordAuthenticationFilter.class)
-                // LOGIN FILTER EXACTLY AT USERNAME/PASSWORD SLOT
-                .addFilterAt(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
+                configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+                configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setAllowCredentials(true);
 
-        return http.build();
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
-    }
+                return source;
+        }
 }

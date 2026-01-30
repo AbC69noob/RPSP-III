@@ -31,10 +31,6 @@ public class Subjects {
     @Column(name = "active")
     private Boolean active = true;
 
-    @ManyToOne
-    @JoinColumn(name = "course_batch_id", nullable = true)
-    private CourseBatch courseBatch;  // <-- FK to CourseBatch
-
     /* Getters and Setters */
 
     public Boolean getActive() {
@@ -95,14 +91,6 @@ public class Subjects {
 
     public void setSemester(Integer semester) {
         this.semester = semester;
-    }
-
-    public CourseBatch getCourseBatch() {
-        return courseBatch;
-    }
-
-    public void setCourseBatch(CourseBatch courseBatch) {
-        this.courseBatch = courseBatch;
     }
 
     public Programs getProgram() {

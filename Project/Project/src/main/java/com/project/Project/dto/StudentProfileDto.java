@@ -6,18 +6,15 @@ public class StudentProfileDto {
     private Long rollNo;
     private String program;
     private Integer semester;
-    private String batch;
 
     public StudentProfileDto(String name,
-                             Long rollNo,
-                             String program,
-                             Integer semester,
-                             String batch) {
+            Long rollNo,
+            String program,
+            Integer semester) {
         this.name = name;
         this.rollNo = rollNo;
         this.program = program;
         this.semester = semester;
-        this.batch = batch;
     }
 
     public String getName() {
@@ -34,9 +31,5 @@ public class StudentProfileDto {
 
     public Integer getSemester() {
         return semester;
-    }
-
-    public String getBatch() {
-        return batch;
     }
 }

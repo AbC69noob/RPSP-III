@@ -8,7 +8,9 @@ import java.util.Optional;
 
 public interface StudentsRepository extends JpaRepository<Students, Long> {
 
+        // ✅ Find student using logged-in username
         Optional<Students> findByUserUsername(String username);
 
+        // Find students by program and semester
         List<Students> findByProgramIdAndSemester(Long programId, Integer semester);
 }

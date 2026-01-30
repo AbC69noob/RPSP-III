@@ -1,3 +1,4 @@
+//MarksController
 package com.project.Project.controller;
 
 import com.project.Project.dto.StudentMarksDto;
@@ -13,7 +14,6 @@ import com.project.Project.repository.TermsRepository;
 import com.project.Project.repository.UsersRepository;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
@@ -32,10 +32,10 @@ public class MarksController {
     private final UsersRepository userRepo;
 
     public MarksController(MarksRepository marksRepo,
-                           StudentsRepository studentRepo,
-                           SubjectsRepository subjectRepo,
-                           TermsRepository termRepo,
-                           UsersRepository userRepo) {
+            StudentsRepository studentRepo,
+            SubjectsRepository subjectRepo,
+            TermsRepository termRepo,
+            UsersRepository userRepo) {
         this.marksRepo = marksRepo;
         this.studentRepo = studentRepo;
         this.subjectRepo = subjectRepo;
@@ -50,19 +50,10 @@ public class MarksController {
 
     @GetMapping("/search")
     public List<StudentMarksDto> searchMarks(
-            @RequestParam Long courseBatchId,
             @RequestParam Long programId,
             @RequestParam Integer semester,
-            @RequestParam Long termId
-    ) {
-        List<Marks> marksList =
-                marksRepo.findByBatchProgramSemesterTerm(
-                        courseBatchId,
-                        programId,
-                        semester,
-                        termId
-                );
-
+            @RequestParam Long termId) {
+        List<Marks> marksList = marksRepo.findByProgramSemesterTerm(programId, semester, termId);
 
         // Map studentId -> DTO
         Map<Long, StudentMarksDto> studentMap = new HashMap<>();

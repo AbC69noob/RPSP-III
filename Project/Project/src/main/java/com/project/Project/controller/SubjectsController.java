@@ -26,18 +26,15 @@ public class SubjectsController {
     private final ProgramsRepository programsRepo;
     private final TeachersRepository teachersRepo;
     private final TeacherSubjectsRepository teacherSubjectsRepo;
-    private final com.project.Project.repository.CourseBatchRepository courseBatchRepo;
 
     public SubjectsController(SubjectsRepository repo,
             ProgramsRepository programsRepo,
             TeachersRepository teachersRepo,
-            TeacherSubjectsRepository teacherSubjectsRepo,
-            com.project.Project.repository.CourseBatchRepository courseBatchRepo) {
+            TeacherSubjectsRepository teacherSubjectsRepo) {
         this.repo = repo;
         this.programsRepo = programsRepo;
         this.teachersRepo = teachersRepo;
         this.teacherSubjectsRepo = teacherSubjectsRepo;
-        this.courseBatchRepo = courseBatchRepo;
     }
 
     // ADMIN + TEACHER can view
@@ -51,12 +48,10 @@ public class SubjectsController {
     @PreAuthorize("hasAnyAuthority('admin','teacher')")
     public List<Subjects> getFiltered(
             @RequestParam Long programId,
-            @RequestParam Integer semester,
-            @RequestParam Long batchId) {
+            @RequestParam Integer semester) {
         System.out
-                .println("Filtering subjects: programId=" + programId + ", semester=" + semester + ", batchId="
-                        + batchId);
-        List<Subjects> result = repo.findFilteredSubjects(programId, semester, batchId);
+                .println("Filtering subjects: programId=" + programId + ", semester=" + semester);
+        List<Subjects> result = repo.findFilteredSubjects(programId, semester);
         System.out.println("Found " + result.size() + " subjects");
         return result;
     }
@@ -71,9 +66,6 @@ public class SubjectsController {
         Programs program = programsRepo.findById(request.getProgramId())
                 .orElseThrow(() -> new RuntimeException("Program not found"));
 
-        com.project.Project.model.CourseBatch batch = courseBatchRepo.findById(request.getCourseBatchId())
-                .orElseThrow(() -> new RuntimeException("Course Batch not found"));
-
         // 2. Create Subject
         Subjects subject = new Subjects();
         subject.setCode(request.getCode());
@@ -82,7 +74,6 @@ public class SubjectsController {
         subject.setPassMarks(request.getPassMarks());
         subject.setSemester(request.getSemester());
         subject.setProgram(program);
-        subject.setCourseBatch(batch);
         subject.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
 
         Subjects savedSubject = repo.save(subject);
@@ -97,7 +88,6 @@ public class SubjectsController {
             ts.setSubject(savedSubject);
             ts.setStudentProgram(program);
             ts.setStudentSemester(request.getSemester());
-            ts.setStudentBatch(batch);
 
             teacherSubjectsRepo.save(ts);
         }

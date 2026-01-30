@@ -1,7 +1,6 @@
 package com.project.Project.dto;
 
 public class SubjectRequest {
-
     private String code;
     private String name;
     private Integer fullMark;
@@ -9,11 +8,8 @@ public class SubjectRequest {
     private Integer semester;
     private Long programId;
     private Long teacherId;
-    private String batch;
-    private Long courseBatchId;
 
     // Getters and Setters
-
     public String getCode() {
         return code;
     }
@@ -68,21 +64,5 @@ public class SubjectRequest {
 
     public void setTeacherId(Long teacherId) {
         this.teacherId = teacherId;
-    }
-
-    public String getBatch() {
-        return batch;
-    }
-
-    public void setBatch(String batch) {
-        this.batch = batch;
-    }
-
-    public Long getCourseBatchId() {
-        return courseBatchId;
-    }
-
-    public void setCourseBatchId(Long courseBatchId) {
-        this.courseBatchId = courseBatchId;
     }
 }
