@@ -6,7 +6,11 @@ public class ProfileDto {
     private String name;
     private String username;
     private String role;
-    private Long teacherId; // <-- new
+    private Long teacherId;
+
+    // Mobile specific fields
+    private Boolean requiresPasswordChange;
+    private StudentDetailsDto studentDetails;
 
     public ProfileDto(Long id, String name, String username, String role) {
         this.id = id;
@@ -21,6 +25,16 @@ public class ProfileDto {
         this.username = username;
         this.role = role;
         this.teacherId = teacherId;
+    }
+
+    public ProfileDto(Long id, String name, String username, String role, Boolean requiresPasswordChange,
+            StudentDetailsDto studentDetails) {
+        this.id = id;
+        this.name = name;
+        this.username = username;
+        this.role = role;
+        this.requiresPasswordChange = requiresPasswordChange;
+        this.studentDetails = studentDetails;
     }
 
     public Long getId() {
@@ -41,5 +55,13 @@ public class ProfileDto {
 
     public Long getTeacherId() {
         return teacherId;
+    }
+
+    public Boolean getRequiresPasswordChange() {
+        return requiresPasswordChange;
+    }
+
+    public StudentDetailsDto getStudentDetails() {
+        return studentDetails;
     }
 }

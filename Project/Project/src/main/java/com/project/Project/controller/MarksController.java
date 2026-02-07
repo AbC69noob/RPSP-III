@@ -48,12 +48,54 @@ public class MarksController {
         return marksRepo.findAll();
     }
 
+    @GetMapping("/my-marks")
+    public List<StudentMarksDto> getMyMarks(
+            @RequestParam Integer semester,
+            @RequestParam Long termId) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        Students student = studentRepo.findByUserUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Student profile not found for user: " + username));
+
+        List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(
+                student.getProgram().getId(),
+                semester,
+                termId,
+                student.getStudentBatch().getId());
+
+        // Filter for THIS student only (Repo method returns whole batch)
+        // Optimization: Create a specific repo method findByStudentAndSemesterAndTerm?
+        // For now, filtering in memory or using existing logic is fine.
+        // Actually, let's filter the results to only include this student's marks.
+
+        marksList = marksList.stream()
+                .filter(m -> m.getStudent().getId().equals(student.getId()))
+                .toList();
+
+        // Convert to DTO
+        Map<Long, StudentMarksDto> studentMap = new HashMap<>();
+        StudentMarksDto dto = new StudentMarksDto(student.getId(), student.getName(), student.getRollNo());
+
+        for (Marks m : marksList) {
+            dto.addMark(
+                    m.getSubject().getName(),
+                    m.getObtainedMarks(),
+                    m.getSubject().getFullMark(),
+                    m.getSubject().getPassMarks());
+        }
+
+        return List.of(dto);
+    }
+
     @GetMapping("/search")
     public List<StudentMarksDto> searchMarks(
             @RequestParam Long programId,
             @RequestParam Integer semester,
-            @RequestParam Long termId) {
-        List<Marks> marksList = marksRepo.findByProgramSemesterTerm(programId, semester, termId);
+            @RequestParam Long termId,
+            @RequestParam Long studentBatchId) {
+        List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(programId, semester, termId, studentBatchId);
 
         // Map studentId -> DTO
         Map<Long, StudentMarksDto> studentMap = new HashMap<>();
@@ -66,7 +108,11 @@ public class MarksController {
                 studentMap.put(studentId, dto);
             }
 
-            dto.addMark(m.getSubject().getName(), m.getObtainedMarks());
+            dto.addMark(
+                    m.getSubject().getName(),
+                    m.getObtainedMarks(),
+                    m.getSubject().getFullMark(),
+                    m.getSubject().getPassMarks());
         }
 
         // Return sorted by RollNo

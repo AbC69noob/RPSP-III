@@ -225,7 +225,7 @@ const MarksTab = () => {
         }).filter(Boolean);
 
         if (marksToSave.length === 0) {
-            toast.info('Nothing to sync');
+            toast.info('Nothing to save');
             return;
         }
 
@@ -359,7 +359,7 @@ const MarksTab = () => {
                                 <th style={{ width: '100px' }}>Pass Mark</th>
                                 <th style={{ width: '160px' }}>Obtained Marks</th>
                                 <th>Faculty Remarks</th>
-                                <th style={{ width: '140px', textAlign: 'center' }}>Sync Status</th>
+                                <th style={{ width: '140px', textAlign: 'center' }}>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -473,7 +473,7 @@ const MarksTab = () => {
                     </div>
                     <div className="flex gap-4">
                         <button className="btn-modern btn-primary" onClick={handleApplyFilters}>
-                            <RefreshCcw size={18} /> Sync Subjects & Roster
+                            <RefreshCcw size={18} /> Submit
                         </button>
                         {filtersApplied && <button className="btn-modern btn-secondary" onClick={() => { setFiltersApplied(false); setExpandedSubjectId(null); }}>Reset</button>}
                     </div>

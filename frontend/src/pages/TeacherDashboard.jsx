@@ -432,8 +432,8 @@ const TeacherDashboard = () => {
                                             <th style={{ width: '100px' }}>Full Mark</th>
                                             <th style={{ width: '100px' }}>Pass Mark</th>
                                             <th style={{ width: '160px' }}>Obtained Marks</th>
-                                            <th>Faculty Remarks</th>
-                                            <th style={{ width: '140px', textAlign: 'center' }}>Sync Status</th>
+                                            <th>Remarks</th>
+                                            <th style={{ width: '140px', textAlign: 'center' }}>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -472,7 +472,7 @@ const TeacherDashboard = () => {
                                                             <input
                                                                 type="text"
                                                                 className="table-input py-2 px-3 font-medium text-gray-600 border-none bg-gray-50 focus:bg-white"
-                                                                placeholder="Note..."
+                                                                placeholder="Remarks ...(Optional)"
                                                                 value={entry.remark}
                                                                 onChange={(e) => handleMarkChange(student.id, 'remark', e.target.value)}
                                                             />
@@ -497,7 +497,7 @@ const TeacherDashboard = () => {
                                         className="btn-modern btn-primary px-8"
                                         onClick={handleSaveAll}
                                     >
-                                        <Save size={18} /> Commit Changes
+                                        <Save size={18} /> Save
                                     </button>
                                 </div>
                             )}

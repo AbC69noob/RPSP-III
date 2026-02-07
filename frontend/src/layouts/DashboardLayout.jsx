@@ -7,7 +7,8 @@ import {
   UserCog,
   ClipboardCheck,
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  Table
 } from 'lucide-react';
 
 const DashboardLayout = () => {
@@ -59,6 +60,11 @@ const DashboardLayout = () => {
               <ClipboardCheck size={20} />
               <span className="link-text">Marks</span>
             </NavLink>
+            {/* <NavLink to="results" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+              <Table size={20} />
+              <span className="link-text">Results</span>
+            </NavLink> */}
+
           </nav>
           <button onClick={handleLogout} className="logout-btn-sidebar">
             <LogOut size={20} />

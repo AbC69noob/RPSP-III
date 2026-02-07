@@ -465,13 +465,7 @@ const Login = () => {
                     </form>
                 )}
 
-                {step === 'login' && (
-                    <div className="info-box">
-                        <p className="font-bold text-gray-900 mb-1">Default Admin:</p>
-                        <p>Username: admin</p>
-                        <p>Password: admin123</p>
-                    </div>
-                )}
+                
             </div>
         </div>
     );

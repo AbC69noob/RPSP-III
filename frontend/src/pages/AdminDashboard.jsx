@@ -8,6 +8,7 @@ const AdminDashboard = () => {
         { name: 'Terms', path: 'terms' },
         { name: 'Faculties', path: 'faculties' },
         { name: 'Teachers', path: 'teachers' },
+        { name: 'Results', path: 'results' },
         { name: 'Marks', path: '/dashboard/marks' },
     ];
 

@@ -56,19 +56,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         UserPrincipal userPrincipal = (UserPrincipal) authResult.getPrincipal();
 
-        boolean isStudent = authResult.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("student"));
-
-        if (isStudent) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("""
-                        {
-                          "message": "Students must log in via the mobile application."
-                        }
-                    """);
-            return;
-        }
+        // REMOVED STUDENT CHECK TO ALLOW MOBILE LOGIN
+        // boolean isStudent = authResult.getAuthorities().stream()
+        // .anyMatch(a -> a.getAuthority().equals("student"));
+        // if (isStudent) { ... }
 
         String token = jwtUtils.generateJwtToken(authResult);
 

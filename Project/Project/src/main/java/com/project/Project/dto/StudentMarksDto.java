@@ -9,7 +9,10 @@ public class StudentMarksDto {
     private Long studentId;
     private String studentName;
     private Long rollNo;
-    private Map<String, BigDecimal> marks = new HashMap<>(); // SubjectName -> ObtainedMarks
+    private Map<String, Map<String, BigDecimal>> marks = new HashMap<>(); // SubjectName -> { "obtained": X, "full": Y,
+                                                                          // "pass": Z }
+    private BigDecimal totalObtained = BigDecimal.ZERO;
+    private BigDecimal totalFull = BigDecimal.ZERO;
 
     public StudentMarksDto(Long studentId, String studentName, Long rollNo) {
         this.studentId = studentId;
@@ -29,11 +32,28 @@ public class StudentMarksDto {
         return rollNo;
     }
 
-    public Map<String, BigDecimal> getMarks() {
+    public Map<String, Map<String, BigDecimal>> getMarks() {
         return marks;
     }
 
-    public void addMark(String subjectName, BigDecimal obtainedMarks) {
-        this.marks.put(subjectName, obtainedMarks);
+    public BigDecimal getTotalObtained() {
+        return totalObtained;
+    }
+
+    public BigDecimal getTotalFull() {
+        return totalFull;
+    }
+
+    public void addMark(String subjectName, BigDecimal obtained, Integer full, Integer pass) {
+        Map<String, BigDecimal> details = new HashMap<>();
+        details.put("obtained", obtained);
+        details.put("full", BigDecimal.valueOf(full));
+        details.put("pass", BigDecimal.valueOf(pass));
+        this.marks.put(subjectName, details);
+
+        if (obtained != null) {
+            this.totalObtained = this.totalObtained.add(obtained);
+        }
+        this.totalFull = this.totalFull.add(BigDecimal.valueOf(full));
     }
 }
