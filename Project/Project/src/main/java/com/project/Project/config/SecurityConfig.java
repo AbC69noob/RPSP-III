@@ -86,15 +86,22 @@ public class SecurityConfig {
                                                                 "/students/**",
                                                                 "/subjects/**",
                                                                 "/teachers/**",
-                                                                "/programs/**",
-                                                                "/terms/**",
-                                                                "/marks/**",
                                                                 "/course-batches",
                                                                 "/course-batches/**",
                                                                 "/student-batches",
                                                                 "/student-batches/**",
-                                                                "/teacher-subjects/**")
+                                                                "/teacher-subjects/**",
+                                                                "/marks",
+                                                                "/marks/search",
+                                                                "/marks/bulk")
                                                 .hasAnyAuthority("admin", "teacher")
+
+                                                // ADMIN + TEACHER + STUDENT
+                                                .requestMatchers(
+                                                                "/marks/my-marks",
+                                                                "/programs/**",
+                                                                "/terms/**")
+                                                .hasAnyAuthority("admin", "teacher", "student")
 
                                                 .anyRequest().authenticated())
                                 // JWT AUTHORIZATION FIRST

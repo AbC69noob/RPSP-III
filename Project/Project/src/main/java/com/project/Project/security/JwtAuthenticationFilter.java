@@ -69,6 +69,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Map<String, Object> tokenMap = new HashMap<>();
         tokenMap.put("token", token);
         tokenMap.put("requiresPasswordChange", userPrincipal.isRequiresPasswordChange());
+        tokenMap.put("userId", userPrincipal.getId());
 
         new ObjectMapper().writeValue(response.getWriter(), tokenMap);
     }

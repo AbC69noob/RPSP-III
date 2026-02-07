@@ -24,13 +24,13 @@ public class ProgramsController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('admin', 'teacher')")
+    @PreAuthorize("hasAnyAuthority('admin', 'teacher', 'student')")
     public List<Programs> getAll() {
         return repo.findAll();
     }
 
     @GetMapping("/faculty/{facultyId}")
-    @PreAuthorize("hasAnyAuthority('admin', 'teacher')")
+    @PreAuthorize("hasAnyAuthority('admin', 'teacher', 'student')")
     public List<Programs> getByFaculty(@PathVariable Long facultyId) {
         return repo.findByFacultyId(facultyId);
     }
