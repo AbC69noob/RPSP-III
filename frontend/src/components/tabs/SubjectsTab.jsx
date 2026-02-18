@@ -302,15 +302,41 @@ const SubjectsTab = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="label">Full Marks *</label>
-                                        <input type="number" required className="input-field" placeholder="100"
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            required
+                                            className="input-field"
+                                            placeholder="100"
                                             value={subjectForm.fullMark}
-                                            onChange={e => setSubjectForm({ ...subjectForm, fullMark: e.target.value })} />
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (val !== '' && Number(val) < 0) {
+                                                    toast.warn("Marks cannot be negative");
+                                                    return;
+                                                }
+                                                setSubjectForm({ ...subjectForm, fullMark: val });
+                                            }}
+                                        />
                                     </div>
                                     <div>
                                         <label className="label">Pass Marks *</label>
-                                        <input type="number" required className="input-field" placeholder="40"
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            required
+                                            className="input-field"
+                                            placeholder="40"
                                             value={subjectForm.passMarks}
-                                            onChange={e => setSubjectForm({ ...subjectForm, passMarks: e.target.value })} />
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (val !== '' && Number(val) < 0) {
+                                                    toast.warn("Marks cannot be negative");
+                                                    return;
+                                                }
+                                                setSubjectForm({ ...subjectForm, passMarks: val });
+                                            }}
+                                        />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">

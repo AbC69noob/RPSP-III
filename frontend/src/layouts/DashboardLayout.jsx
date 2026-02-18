@@ -10,12 +10,23 @@ import {
   LayoutDashboard,
   Table
 } from 'lucide-react';
+import { useState } from 'react';
 
 const DashboardLayout = () => {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/login';
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -87,6 +98,41 @@ const DashboardLayout = () => {
         )}
         <Outlet />
       </main>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-modal-content" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3 className="text-lg font-bold text-red-600">Logout</h3>
+              <button
+                onClick={cancelLogout}
+                className="text-gray-500 hover:text-gray-700 font-bold text-xl bg-transparent border-none"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body py-6">
+              <p className="text-gray-700 font-medium">Are you sure you want to logout?</p>
+              <p className="text-gray-500 text-sm mt-2">You will be redirected to the login page.</p>
+            </div>
+            <div className="modal-footer">
+              <button
+                onClick={cancelLogout}
+                className="btn btn-secondary mr-2"
+              >
+                No, Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="btn bg-red-600 text-white hover:bg-red-700 shadow-sm"
+              >
+                Yes, Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
