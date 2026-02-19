@@ -358,7 +358,7 @@ const MarksTab = () => {
                                 <th style={{ width: '100px' }}>Full Mark</th>
                                 <th style={{ width: '100px' }}>Pass Mark</th>
                                 <th style={{ width: '160px' }}>Obtained Marks</th>
-                                <th>Faculty Remarks</th>
+                                <th>Remarks</th>
                                 <th style={{ width: '140px', textAlign: 'center' }}>Status</th>
                             </tr>
                         </thead>

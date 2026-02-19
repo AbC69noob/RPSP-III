@@ -2,6 +2,7 @@ package com.example.rpsp.activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,7 +33,8 @@ import retrofit2.Response;
 
 public class DashboardActivity extends AppCompatActivity {
 
-    private TextView tvStudentName, tvRollNumber, tvProgram, tvBatch;
+    private TextView tvStudentName, tvRollNumber, tvProgram, tvBatch, tvTotalPercentage;
+    private View layoutSummary;
     private Spinner spinnerSemester, spinnerTerm;
     private Button btnViewResults;
     private RecyclerView rvMarks;
@@ -56,6 +58,8 @@ public class DashboardActivity extends AppCompatActivity {
         btnViewResults = findViewById(R.id.btnViewResults);
         rvMarks = findViewById(R.id.rvMarks);
         progressBar = findViewById(R.id.progressBar);
+        tvTotalPercentage = findViewById(R.id.tvTotalPercentage);
+        layoutSummary = findViewById(R.id.layoutSummary);
 
         rvMarks.setLayoutManager(new LinearLayoutManager(this));
 
@@ -147,6 +151,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         progressBar.setVisibility(View.VISIBLE);
         rvMarks.setAdapter(null); // Clear previous results
+        layoutSummary.setVisibility(View.GONE);
 
         apiService.getMyMarks(token, semester, term.getId()).enqueue(new Callback<List<StudentMarksDto>>() {
             @Override
@@ -159,6 +164,7 @@ public class DashboardActivity extends AppCompatActivity {
                     if (marksList != null && !marksList.isEmpty()) {
                         MarksAdapter adapter = new MarksAdapter(marksList);
                         rvMarks.setAdapter(adapter);
+                        updateTotalPercentage(marksList);
                     } else {
                         Toast.makeText(DashboardActivity.this, "No marks found for this criteria", Toast.LENGTH_SHORT)
                                 .show();
@@ -174,6 +180,27 @@ public class DashboardActivity extends AppCompatActivity {
                 Toast.makeText(DashboardActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void updateTotalPercentage(List<StudentMarksDto.MarkDto> marksList) {
+        double totalObtained = 0.0;
+        double totalFull = 0.0;
+        for (StudentMarksDto.MarkDto mark : marksList) {
+            if (mark.getObtainedMarks() != null) {
+                totalObtained += mark.getObtainedMarks();
+            }
+            if (mark.getFullMarks() != null) {
+                totalFull += mark.getFullMarks();
+            }
+        }
+
+        if (totalFull > 0) {
+            double percentage = (totalObtained / totalFull) * 100.0;
+            tvTotalPercentage.setText(String.format("%.2f%%", percentage));
+        } else {
+            tvTotalPercentage.setText("--");
+        }
+        layoutSummary.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -209,7 +236,17 @@ public class DashboardActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             StudentMarksDto.MarkDto mark = marks.get(position);
             holder.tvSubjectName.setText(mark.getSubjectName());
-            holder.tvMarksObtained.setText(String.format("%.1f / %.1f", mark.getObtainedMarks(), mark.getFullMarks()));
+            holder.tvMarksObtained.setText(formatMark(mark.getObtainedMarks()));
+
+            String remark = getRemark(mark);
+            holder.tvRemark.setText(remark);
+            if ("Pass".equals(remark)) {
+                holder.tvRemark.setTextColor(Color.parseColor("#2E7D32"));
+            } else if ("Fail".equals(remark)) {
+                holder.tvRemark.setTextColor(Color.parseColor("#C62828"));
+            } else {
+                holder.tvRemark.setTextColor(Color.parseColor("#7C8AA5"));
+            }
         }
 
         @Override
@@ -218,13 +255,31 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         static class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tvSubjectName, tvMarksObtained;
+            TextView tvSubjectName, tvMarksObtained, tvRemark;
 
             ViewHolder(View itemView) {
                 super(itemView);
                 tvSubjectName = itemView.findViewById(R.id.tvSubjectName);
                 tvMarksObtained = itemView.findViewById(R.id.tvMarksObtained);
+                tvRemark = itemView.findViewById(R.id.tvRemark);
             }
+        }
+
+        private static String getRemark(StudentMarksDto.MarkDto mark) {
+            if (mark.getObtainedMarks() == null || mark.getPassMarks() == null) {
+                return "-";
+            }
+            return mark.getObtainedMarks() >= mark.getPassMarks() ? "Pass" : "Fail";
+        }
+
+        private static String formatMark(Double value) {
+            if (value == null) {
+                return "-";
+            }
+            if (Math.abs(value - Math.round(value)) < 0.01) {
+                return String.format("%.0f", value);
+            }
+            return String.format("%.1f", value);
         }
     }
 }
