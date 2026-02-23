@@ -194,9 +194,16 @@ const MarksTab = () => {
     };
 
     const handleMarkChange = (subjId, studId, field, value) => {
-        if (field === 'obtainedMarks' && value !== '' && Number(value) < 0) {
-            toast.warn("Marks cannot be negative");
-            return;
+        if (field === 'obtainedMarks' && value !== '') {
+            const numValue = Number(value);
+            if (numValue < 0) {
+                toast.warn("Marks cannot be negative");
+                return;
+            }
+            if (numValue > 100) {
+                toast.warn("Marks cannot exceed 100");
+                return;
+            }
         }
 
         setMarksEntry(prev => ({

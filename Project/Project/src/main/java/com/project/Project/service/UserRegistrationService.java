@@ -122,7 +122,12 @@ public class UserRegistrationService {
         Students student = new Students();
         student.setUser(user);
         student.setName(request.getUsername());
-        student.setRollNo(request.getRollNo());
+
+        Long rollNo = request.getRollNo();
+        if (rollNo != null && (rollNo < 1 || rollNo > 45)) {
+            throw new RuntimeException("Roll number must be between 1 and 45");
+        }
+        student.setRollNo(rollNo);
 
         if (request.getSemesterId() != null) {
             com.project.Project.model.Semester sem = semesterRepository.findById(request.getSemesterId())

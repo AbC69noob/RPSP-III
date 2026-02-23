@@ -106,6 +106,15 @@ const UsersTab = () => {
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        if (name === 'rollNo' && value !== '') {
+            const numValue = Number(value);
+            if (numValue < 1 || numValue > 45) {
+                toast.warn("Roll number must be between 1 and 45");
+                return;
+            }
+        }
+
         setFormData({
             ...formData,
             [name]: type === 'checkbox' ? checked : value
@@ -124,6 +133,11 @@ const UsersTab = () => {
 
             // Add role-specific fields
             if (formData.role === 'student') {
+                const rollNoNum = formData.rollNo ? Number(formData.rollNo) : null;
+                if (rollNoNum !== null && (rollNoNum < 1 || rollNoNum > 45)) {
+                    toast.warn("Roll number must be between 1 and 45");
+                    return;
+                }
                 payload = {
                     ...payload,
                     name: formData.name,
@@ -131,7 +145,7 @@ const UsersTab = () => {
                     dob: formData.dob,
                     permanentAddress: formData.permanentAddress,
                     temporaryAddress: formData.temporaryAddress,
-                    rollNo: formData.rollNo ? Number(formData.rollNo) : null,
+                    rollNo: rollNoNum,
                     batchId: formData.studentBatchId ? Number(formData.studentBatchId) : null,
                     programId: formData.programId ? Number(formData.programId) : null
                 };
