@@ -12,9 +12,12 @@ import java.util.List;
 public class StudentsController {
 
     private final StudentsRepository repo;
+    private final com.project.Project.repository.SemesterRepository semesterRepo;
 
-    public StudentsController(StudentsRepository repo) {
+    public StudentsController(StudentsRepository repo,
+            com.project.Project.repository.SemesterRepository semesterRepo) {
         this.repo = repo;
+        this.semesterRepo = semesterRepo;
     }
 
     // ================= GET ALL STUDENTS =================
@@ -26,26 +29,22 @@ public class StudentsController {
     @GetMapping("/filter")
     public ResponseEntity<List<Students>> getFilteredStudents(
             @RequestParam Long programId,
-            @RequestParam Integer semester,
-            @RequestParam(required = false) Long courseBatchId) {
-
-        // Log the incoming parameters for debugging
-        System.out.println("Filtering students with: programId=" + programId + ", semester=" + semester
-                + ", courseBatchId=" + courseBatchId);
+            @RequestParam Long semesterId,
+            @RequestParam(required = false) Long studentBatchId) {
 
         // Validate required parameters
         if (programId == null) {
             throw new RuntimeException("Program ID parameter is required");
         }
-        if (semester == null) {
-            throw new RuntimeException("Semester parameter is required");
+        if (semesterId == null) {
+            throw new RuntimeException("Semester ID parameter is required");
         }
 
         List<Students> students;
-        if (courseBatchId != null) {
-            students = repo.findByProgramIdAndSemesterAndStudentBatchCourseBatchId(programId, semester, courseBatchId);
+        if (studentBatchId != null) {
+            students = repo.findByProgramIdAndSemesterIdAndStudentBatchId(programId, semesterId, studentBatchId);
         } else {
-            students = repo.findByProgramIdAndSemester(programId, semester);
+            students = repo.findByProgramIdAndSemesterId(programId, semesterId);
         }
 
         System.out.println("Found " + students.size() + " students matching criteria");
@@ -72,7 +71,11 @@ public class StudentsController {
         // Update all allowed fields
         student.setName(updated.getName());
         student.setRollNo(updated.getRollNo());
-        student.setSemester(updated.getSemester());
+        if (updated.getSemester() != null && updated.getSemester().getId() != null) {
+             com.project.Project.model.Semester sem = semesterRepo.findById(updated.getSemester().getId())
+                    .orElseThrow(() -> new RuntimeException("Semester not found"));
+             student.setSemester(sem);
+        }
         student.setProgram(updated.getProgram());
         student.setPermanentAddress(updated.getPermanentAddress());
         student.setTemporaryAddress(updated.getTemporaryAddress());
@@ -81,5 +84,28 @@ public class StudentsController {
 
         Students saved = repo.save(student);
         return ResponseEntity.ok(saved);
+    }
+
+    // ================= BULK UPDATE STUDENT SEMESTER =================
+    @PutMapping("/bulk-semester")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<String> bulkUpdateSemester(@RequestBody com.project.Project.dto.BulkSemesterUpdateRequest request) {
+        if (request.getStudentIds() == null || request.getStudentIds().isEmpty()) {
+            return ResponseEntity.badRequest().body("No student IDs provided");
+        }
+        if (request.getTargetSemesterId() == null) {
+            return ResponseEntity.badRequest().body("Target semester ID is required");
+        }
+
+        com.project.Project.model.Semester targetSemester = semesterRepo.findById(request.getTargetSemesterId())
+                .orElseThrow(() -> new RuntimeException("Target semester not found"));
+
+        List<Students> studentsToUpdate = repo.findAllById(request.getStudentIds());
+        for (Students student : studentsToUpdate) {
+            student.setSemester(targetSemester);
+        }
+        
+        repo.saveAll(studentsToUpdate);
+        return ResponseEntity.ok("Successfully updated semester for " + studentsToUpdate.size() + " students.");
     }
 }

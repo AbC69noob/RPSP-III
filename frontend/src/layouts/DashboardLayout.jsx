@@ -8,7 +8,9 @@ import {
   ClipboardCheck,
   LogOut,
   LayoutDashboard,
-  Table
+  Table,
+  Settings,
+  TrendingUp
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -71,10 +73,18 @@ const DashboardLayout = () => {
               <ClipboardCheck size={20} />
               <span className="link-text">Marks</span>
             </NavLink>
-            {/* <NavLink to="results" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+            {<NavLink to="results" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
               <Table size={20} />
               <span className="link-text">Results</span>
-            </NavLink> */}
+            </NavLink>}
+            <NavLink to="advancement" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+              <TrendingUp size={20} />
+              <span className="link-text">Advancement</span>
+            </NavLink>
+            <NavLink to="settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+              <Settings size={20} />
+              <span className="link-text">Settings</span>
+            </NavLink>
 
           </nav>
           <button onClick={handleLogout} className="logout-btn-sidebar">

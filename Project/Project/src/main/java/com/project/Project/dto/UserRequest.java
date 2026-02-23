@@ -21,7 +21,7 @@ public class UserRequest {
 
     // Student fields
     private Long rollNo;
-    private Integer semester;
+    private Long semesterId;
     private Long programId; // optional, to assign program
     private Long batchId; // student batch id
 
@@ -122,12 +122,12 @@ public class UserRequest {
         this.rollNo = rollNo;
     }
 
-    public Integer getSemester() {
-        return semester;
+    public Long getSemesterId() {
+        return semesterId;
     }
 
-    public void setSemester(Integer semester) {
-        this.semester = semester;
+    public void setSemesterId(Long semesterId) {
+        this.semesterId = semesterId;
     }
 
     public Long getProgramId() {

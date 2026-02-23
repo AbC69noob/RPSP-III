@@ -5,16 +5,16 @@ public class StudentProfileDto {
     private String name;
     private Long rollNo;
     private String program;
-    private Integer semester;
+    private Long semesterId;
 
     public StudentProfileDto(String name,
             Long rollNo,
             String program,
-            Integer semester) {
+            Long semesterId) {
         this.name = name;
         this.rollNo = rollNo;
         this.program = program;
-        this.semester = semester;
+        this.semesterId = semesterId;
     }
 
     public String getName() {
@@ -29,7 +29,7 @@ public class StudentProfileDto {
         return program;
     }
 
-    public Integer getSemester() {
-        return semester;
+    public Long getSemesterId() {
+        return semesterId;
     }
 }

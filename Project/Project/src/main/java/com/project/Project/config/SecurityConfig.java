@@ -100,7 +100,9 @@ public class SecurityConfig {
                                                 .requestMatchers(
                                                                 "/marks/my-marks",
                                                                 "/programs/**",
-                                                                "/terms/**")
+                                                                "/terms/**",
+                                                                "/cr-terms/**",
+                                                                "/semesters/**")
                                                 .hasAnyAuthority("admin", "teacher", "student")
 
                                                 .anyRequest().authenticated())

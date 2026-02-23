@@ -27,7 +27,9 @@ public class Students {
     private String temporaryAddress;
 
     private Long rollNo;
-    private Integer semester;
+    @ManyToOne
+    @JoinColumn(name = "semester_id")
+    private Semester semester;
 
     @ManyToOne
     @JoinColumn(name = "program_id")
@@ -106,11 +108,11 @@ public class Students {
         this.rollNo = rollNo;
     }
 
-    public Integer getSemester() {
+    public Semester getSemester() {
         return semester;
     }
 
-    public void setSemester(Integer semester) {
+    public void setSemester(Semester semester) {
         this.semester = semester;
     }
 

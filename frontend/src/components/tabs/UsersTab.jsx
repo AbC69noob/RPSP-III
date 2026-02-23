@@ -11,7 +11,6 @@ const UsersTab = () => {
     const [showBatchModal, setShowBatchModal] = useState(false); // Student Batch Modal
     const [programs, setPrograms] = useState([]);
     const [studentBatches, setStudentBatches] = useState([]); // List of student batches
-    const [courseBatches, setCourseBatches] = useState([]); // List of course batches (revisions)
     const [filterRole, setFilterRole] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
@@ -52,7 +51,6 @@ const UsersTab = () => {
         fetchUsers();
         fetchPrograms();
         fetchStudentBatches();
-        fetchCourseBatches();
     }, []);
 
     const fetchUsers = async () => {
@@ -81,15 +79,6 @@ const UsersTab = () => {
             setStudentBatches(response.data);
         } catch (error) {
             console.error('Failed to fetch student batches:', error);
-        }
-    };
-
-    const fetchCourseBatches = async () => {
-        try {
-            const response = await api.get('/course-batches');
-            setCourseBatches(response.data);
-        } catch (error) {
-            console.error('Failed to fetch course batches:', error);
         }
     };
 
@@ -123,23 +112,6 @@ const UsersTab = () => {
         });
     };
 
-    const handleBatchSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await api.post('/student-batches', {
-                name: batchForm.name,
-                courseBatchId: Number(batchForm.courseBatchId)
-            });
-            toast.success('Student Batch created successfully');
-            setShowBatchModal(false);
-            setBatchForm({ name: '', courseBatchId: '' });
-            fetchStudentBatches();
-        } catch (error) {
-            console.error('Failed to create student batch:', error);
-            toast.error('Failed to create student batch');
-        }
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -161,7 +133,6 @@ const UsersTab = () => {
                     temporaryAddress: formData.temporaryAddress,
                     rollNo: formData.rollNo ? Number(formData.rollNo) : null,
                     batchId: formData.studentBatchId ? Number(formData.studentBatchId) : null,
-                    semester: formData.semester ? Number(formData.semester) : null,
                     programId: formData.programId ? Number(formData.programId) : null
                 };
             } else if (formData.role === 'teacher') {
@@ -212,12 +183,6 @@ const UsersTab = () => {
             <div className="card flex justify-between items-center">
                 <h3 className="text-lg font-bold text-gray-800 m-0">Users Management</h3>
                 <div className="flex gap-3">
-                    <button
-                        className="btn btn-secondary"
-                        onClick={() => setShowBatchModal(true)}
-                    >
-                        Create Student Batch
-                    </button>
                     <button
                         className="btn btn-primary"
                         onClick={() => setShowModal(true)}
@@ -361,7 +326,7 @@ const UsersTab = () => {
 
                                 {/* Student Specific Fields */}
                                 {formData.role === 'student' && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         <div className="form-group">
                                             <label className="label">Roll No *</label>
                                             <input
@@ -386,21 +351,6 @@ const UsersTab = () => {
                                                 <option value="">Select Faculty</option>
                                                 {programs.map(prog => (
                                                     <option key={prog.id} value={prog.id}>{prog.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="label">Semester *</label>
-                                            <select
-                                                name="semester"
-                                                required
-                                                className="input-field"
-                                                value={formData.semester}
-                                                onChange={handleInputChange}
-                                            >
-                                                <option value="">Select Semester</option>
-                                                {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
-                                                    <option key={sem} value={sem}>Semester {sem}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -485,7 +435,7 @@ const UsersTab = () => {
                             </form>
                         </div>
                     </div>
-                </div>
+                </div >
             )}
 
             {/* Bottom Card: All Users Table */}
@@ -562,86 +512,37 @@ const UsersTab = () => {
                 </div>
             </div>
             {/* Simple Delete Confirmation Modal */}
-            {showDeleteModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '400px' }}>
-                        <div className="modal-header border-none pb-0">
-                            <h2 className="text-xl font-bold text-gray-800 m-0">Confirm Delete</h2>
-                        </div>
-                        <div className="modal-body py-4">
-                            <p className="text-gray-600 m-0">Are you sure you want to delete this user? This action is not reversible.</p>
-                        </div>
-                        <div className="modal-footer pt-0 border-none flex justify-end gap-3">
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => setShowDeleteModal(false)}
-                                disabled={deleteLoading}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="btn btn-danger"
-                                onClick={handleConfirmDelete}
-                                disabled={deleteLoading}
-                            >
-                                {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {/* Create Student Batch Modal */}
-            {showBatchModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '500px' }}>
-                        <div className="modal-header">
-                            <h2 className="text-xl font-bold text-gray-800 m-0">Create Student Batch</h2>
-                            <button
-                                onClick={() => setShowBatchModal(false)}
-                                className="btn btn-danger"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            <form onSubmit={handleBatchSubmit} className="space-y-4">
-                                <div className="form-group">
-                                    <label className="label">Batch Name * (e.g., 2021 Fall)</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="input-field"
-                                        value={batchForm.name}
-                                        onChange={(e) => setBatchForm({ ...batchForm, name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="label">Course Revision (Curriculum) *</label>
-                                    <select
-                                        required
-                                        className="input-field"
-                                        value={batchForm.courseBatchId}
-                                        onChange={(e) => setBatchForm({ ...batchForm, courseBatchId: e.target.value })}
-                                    >
-                                        <option value="">Select Course Revision</option>
-                                        {courseBatches.map(cb => (
-                                            <option key={cb.id} value={cb.id}>
-                                                Batch Year: {cb.startYear} {cb.description ? `(${cb.description})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="submit" className="btn btn-primary">
-                                        Create Batch
-                                    </button>
-                                </div>
-                            </form>
+            {
+                showDeleteModal && (
+                    <div className="modal-overlay">
+                        <div className="modal-content" style={{ maxWidth: '400px' }}>
+                            <div className="modal-header border-none pb-0">
+                                <h2 className="text-xl font-bold text-gray-800 m-0">Confirm Delete</h2>
+                            </div>
+                            <div className="modal-body py-4">
+                                <p className="text-gray-600 m-0">Are you sure you want to delete this user? This action is not reversible.</p>
+                            </div>
+                            <div className="modal-footer pt-0 border-none flex justify-end gap-3">
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowDeleteModal(false)}
+                                    disabled={deleteLoading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="btn btn-danger"
+                                    onClick={handleConfirmDelete}
+                                    disabled={deleteLoading}
+                                >
+                                    {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

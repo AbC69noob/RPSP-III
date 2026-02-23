@@ -5,7 +5,7 @@ public class SubjectRequest {
     private String name;
     private Integer fullMark;
     private Integer passMarks;
-    private Integer semester;
+    private Long semesterId;
     private Long programId;
     private Long courseBatchId;
     private Long teacherId;
@@ -43,12 +43,12 @@ public class SubjectRequest {
         this.passMarks = passMarks;
     }
 
-    public Integer getSemester() {
-        return semester;
+    public Long getSemesterId() {
+        return semesterId;
     }
 
-    public void setSemester(Integer semester) {
-        this.semester = semester;
+    public void setSemesterId(Long semesterId) {
+        this.semesterId = semesterId;
     }
 
     public Long getProgramId() {

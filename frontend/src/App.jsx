@@ -13,6 +13,8 @@ import FacultiesTab from './components/tabs/FacultiesTab';
 import TeachersTab from './components/tabs/TeachersTab';
 import MarksTab from './components/tabs/MarksTab';
 import ResultsTab from './components/tabs/ResultsTab';
+import SettingsTab from './components/tabs/SettingsTab';
+import StudentAdvancementTab from './components/tabs/StudentAdvancementTab';
 import TeacherDashboard from './pages/TeacherDashboard';
 
 // Protected Route Wrapper
@@ -74,6 +76,8 @@ const App = () => {
             <Route path="faculties" element={<FacultiesTab />} />
             <Route path="teachers" element={<TeachersTab />} />
             <Route path="results" element={<ResultsTab />} />
+            <Route path="settings" element={<SettingsTab />} />
+            <Route path="advancement" element={<StudentAdvancementTab />} />
           </Route>
         </Route>
 

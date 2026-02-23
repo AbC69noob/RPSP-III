@@ -13,7 +13,7 @@ public class StudentRequestDto {
 
     private String name;
     private Long rollNo;
-    private Integer semester;
+    private Long semesterId;
     private String permanentAddress;
     private String temporaryAddress;
     private Gender gender;
@@ -69,12 +69,12 @@ public class StudentRequestDto {
         this.rollNo = rollNo;
     }
 
-    public Integer getSemester() {
-        return semester;
+    public Long getSemesterId() {
+        return semesterId;
     }
 
-    public void setSemester(Integer semester) {
-        this.semester = semester;
+    public void setSemesterId(Long semesterId) {
+        this.semesterId = semesterId;
     }
 
     public String getPermanentAddress() {

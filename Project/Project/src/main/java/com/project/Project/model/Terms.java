@@ -18,6 +18,10 @@ public class Terms {
     private Date startDate;
     private Date endDate;
 
+    @ManyToOne
+    @JoinColumn(name = "cr_term_id")
+    private CrTerm crTerm;
+
     @Column(name = "created_at")
     private Timestamp createdAt;
 
@@ -69,6 +73,14 @@ public class Terms {
 
     public void setEndDate(Date endDate) {
         this.endDate = endDate;
+    }
+
+    public CrTerm getCrTerm() {
+        return crTerm;
+    }
+
+    public void setCrTerm(CrTerm crTerm) {
+        this.crTerm = crTerm;
     }
 
     public Timestamp getCreatedAt() {

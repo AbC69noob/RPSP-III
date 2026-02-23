@@ -16,6 +16,7 @@ const SubjectsTab = () => {
     const [programs, setPrograms] = useState([]);
     const [teachers, setTeachers] = useState([]);
     const [courseBatches, setCourseBatches] = useState([]);
+    const [semesters, setSemesters] = useState([]);
     const [assignments, setAssignments] = useState([]);
 
     const [showSubjectModal, setShowSubjectModal] = useState(false);
@@ -30,7 +31,7 @@ const SubjectsTab = () => {
         name: '',
         fullMark: '',
         passMarks: '',
-        semester: '',
+        semesterId: '',
         programId: '',
         courseBatchId: '',
         teacherId: ''
@@ -48,18 +49,20 @@ const SubjectsTab = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [s, p, t, a, b] = await Promise.all([
+            const [s, p, t, a, b, sem] = await Promise.all([
                 api.get('/subjects'),
                 api.get('/programs'),
                 api.get('/teachers'),
                 api.get('/teacher-subjects'),
-                api.get('/course-batches')
+                api.get('/course-batches'),
+                api.get('/semesters')
             ]);
             setSubjects(s.data);
             setPrograms(p.data);
             setTeachers(t.data);
             setAssignments(a.data);
             setCourseBatches(b.data);
+            setSemesters(sem.data.sort((x, y) => x.semesterNumber - y.semesterNumber));
         } catch {
             toast.error('Failed to load data');
         } finally {
@@ -79,7 +82,7 @@ const SubjectsTab = () => {
             name: '',
             fullMark: '',
             passMarks: '',
-            semester: '',
+            semesterId: '',
             programId,
             courseBatchId: batchId,
             teacherId: ''
@@ -110,7 +113,7 @@ const SubjectsTab = () => {
                 ...subjectForm,
                 fullMark: Number(subjectForm.fullMark),
                 passMarks: Number(subjectForm.passMarks),
-                semester: Number(subjectForm.semester),
+                semesterId: Number(subjectForm.semesterId),
                 programId: Number(subjectForm.programId),
                 courseBatchId: Number(subjectForm.courseBatchId),
                 teacherId: subjectForm.teacherId ? Number(subjectForm.teacherId) : null
@@ -180,8 +183,9 @@ const SubjectsTab = () => {
                                         s => s.courseBatch?.id === batch.id && s.program?.id === prog.id
                                     );
                                     const bySem = list.reduce((a, s) => {
-                                        a[s.semester] = a[s.semester] || [];
-                                        a[s.semester].push(s);
+                                        const semKey = s.semester?.name || 'Unknown';
+                                        a[semKey] = a[semKey] || [];
+                                        a[semKey].push(s);
                                         return a;
                                     }, {});
 
@@ -343,10 +347,10 @@ const SubjectsTab = () => {
                                     <div>
                                         <label className="label">Semester *</label>
                                         <select required className="input-field"
-                                            value={subjectForm.semester}
-                                            onChange={e => setSubjectForm({ ...subjectForm, semester: e.target.value })}>
+                                            value={subjectForm.semesterId}
+                                            onChange={e => setSubjectForm({ ...subjectForm, semesterId: e.target.value })}>
                                             <option value="">Select</option>
-                                            {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>{s}</option>)}
+                                            {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                     </div>
                                     <div>

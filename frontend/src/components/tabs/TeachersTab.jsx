@@ -10,13 +10,14 @@ const TeachersTab = () => {
     const [programs, setPrograms] = useState([]);
     const [assignments, setAssignments] = useState([]);
     const [courseBatches, setCourseBatches] = useState([]);
+    const [semesters, setSemesters] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Filter states
     const [selectedTeacher, setSelectedTeacher] = useState('');
     const [selectedBatch, setSelectedBatch] = useState('');
     const [selectedProgram, setSelectedProgram] = useState('');
-    const [selectedSemester, setSelectedSemester] = useState('');
+    const [selectedSemesterId, setSelectedSemesterId] = useState('');
 
     // Selection states
     const [selectedSubjects, setSelectedSubjects] = useState([]);
@@ -29,18 +30,20 @@ const TeachersTab = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [subjectsRes, teachersRes, programsRes, assignmentsRes, courseBatchesRes] = await Promise.all([
+            const [subjectsRes, teachersRes, programsRes, assignmentsRes, courseBatchesRes, semestersRes] = await Promise.all([
                 api.get('/subjects'),
                 api.get('/teachers'),
                 api.get('/programs'),
                 api.get('/teacher-subjects'),
-                api.get('/course-batches')
+                api.get('/course-batches'),
+                api.get('/semesters')
             ]);
             setSubjects(subjectsRes.data);
             setTeachers(teachersRes.data);
             setPrograms(programsRes.data);
             setAssignments(assignmentsRes.data);
             setCourseBatches(courseBatchesRes.data);
+            setSemesters(semestersRes.data.sort((a, b) => a.semesterNumber - b.semesterNumber));
         } catch (error) {
             console.error('Failed to fetch data:', error);
             toast.error('Failed to load data');
@@ -81,7 +84,7 @@ const TeachersTab = () => {
         if (selectedProgram && subject.program?.id !== Number(selectedProgram)) return false;
 
         // Apply semester filter
-        if (selectedSemester && subject.semester !== Number(selectedSemester)) return false;
+        if (selectedSemesterId && subject.semester?.id !== Number(selectedSemesterId)) return false;
 
         return true;
     });
@@ -133,7 +136,7 @@ const TeachersTab = () => {
             // Apply filters
             if (selectedBatch && subject.courseBatch?.id !== Number(selectedBatch)) return false;
             if (selectedProgram && subject.program?.id !== Number(selectedProgram)) return false;
-            if (selectedSemester && subject.semester !== Number(selectedSemester)) return false;
+            if (selectedSemesterId && subject.semester?.id !== Number(selectedSemesterId)) return false;
 
             return true;
         });
@@ -163,7 +166,7 @@ const TeachersTab = () => {
                 return newSelection;
             });
         }
-    }, [selectedTeacher, selectedBatch, selectedProgram, selectedSemester, subjects, assignments]);
+    }, [selectedTeacher, selectedBatch, selectedProgram, selectedSemesterId, subjects, assignments]);
 
     // Handle bulk assignment
     const handleBulkAssign = async () => {
@@ -295,14 +298,14 @@ const TeachersTab = () => {
     const handleResetFilters = () => {
         setSelectedBatch('');
         setSelectedProgram('');
-        setSelectedSemester('');
+        setSelectedSemesterId('');
         setSelectedSubjects([]);
         setSelectAll(false);
     };
 
     if (loading) return <div className="card">Loading...</div>;
 
-    const showSubjects = selectedBatch || selectedProgram || selectedSemester;
+    const showSubjects = selectedBatch || selectedProgram || selectedSemesterId;
 
     return (
         <div className="card">
@@ -363,12 +366,12 @@ const TeachersTab = () => {
                         <label className="label">Semester</label>
                         <select
                             className="input-field"
-                            value={selectedSemester}
-                            onChange={(e) => setSelectedSemester(e.target.value)}
+                            value={selectedSemesterId}
+                            onChange={(e) => setSelectedSemesterId(e.target.value)}
                         >
                             <option value="">All Semesters</option>
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
-                                <option key={s} value={s}>{s}</option>
+                            {semesters.map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
                             ))}
                         </select>
                     </div>
@@ -451,7 +454,7 @@ const TeachersTab = () => {
                                                     <td className="py-3 px-4 text-sm font-medium text-gray-800">{subject.name}</td>
                                                     <td className="py-3 px-4 text-sm text-gray-600">{subject.courseBatch?.startYear ? `Revised on ${subject.courseBatch.startYear}` : 'N/A'}</td>
                                                     <td className="py-3 px-4 text-sm text-gray-600">{subject.program?.name || 'N/A'}</td>
-                                                    <td className="py-3 px-4 text-sm text-gray-600">{subject.semester}</td>
+                                                    <td className="py-3 px-4 text-sm text-gray-600">{subject.semester?.name || 'N/A'}</td>
                                                     <td className="py-3 px-4 text-sm">
                                                         {isAlreadyAssigned ? (
                                                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">

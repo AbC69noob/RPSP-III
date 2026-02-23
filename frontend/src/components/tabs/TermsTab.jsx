@@ -9,10 +9,11 @@ const TermsTab = () => {
     const [showModal, setShowModal] = useState(false);
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
     const [editingId, setEditingId] = useState(null);
+    const [crTerms, setCrTerms] = useState([]);
 
     // Form State
     const [termForm, setTermForm] = useState({
-        code: '',
+        crTermId: '',
         name: '',
         remarks: '',
         startDate: '',
@@ -21,7 +22,17 @@ const TermsTab = () => {
 
     useEffect(() => {
         fetchTerms();
+        fetchCrTerms();
     }, []);
+
+    const fetchCrTerms = async () => {
+        try {
+            const res = await api.get('/cr-terms');
+            setCrTerms(res.data);
+        } catch (error) {
+            console.error("Error fetching cr-terms", error);
+        }
+    };
 
     const fetchTerms = async () => {
         setLoading(true);
@@ -39,18 +50,24 @@ const TermsTab = () => {
     const handleCreateTerm = async (e) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...termForm,
+                crTerm: { id: parseInt(termForm.crTermId) }
+            };
+            delete payload.crTermId;
+
             if (editingId) {
                 // Update existing term
-                await api.put(`/terms/${editingId}`, termForm);
+                await api.put(`/terms/${editingId}`, payload);
                 toast.success('Term updated successfully!');
                 setEditingId(null);
             } else {
                 // Create new term
-                await api.post('/terms', termForm);
+                await api.post('/terms', payload);
                 toast.success('Term created successfully!');
             }
             setShowModal(false);
-            setTermForm({ code: '', name: '', remarks: '', startDate: '', endDate: '' });
+            setTermForm({ crTermId: '', name: '', remarks: '', startDate: '', endDate: '' });
             fetchTerms();
         } catch (error) {
             console.error('Failed to save term:', error);
@@ -61,7 +78,7 @@ const TermsTab = () => {
     const handleEditClick = (term) => {
         setEditingId(term.id);
         setTermForm({
-            code: term.code,
+            crTermId: term.crTerm?.id || '',
             name: term.name,
             remarks: term.remarks || '',
             startDate: term.startDate || '',
@@ -110,7 +127,7 @@ const TermsTab = () => {
                         <table className="w-full">
                             <thead>
                                 <tr>
-                                    <th className="py-3 px-4 bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Code</th>
+                                    <th className="py-3 px-4 bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Term Category</th>
                                     <th className="py-3 px-4 bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
                                     <th className="py-3 px-4 bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Remarks</th>
                                     <th className="py-3 px-4 bg-gray-50 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
@@ -119,7 +136,7 @@ const TermsTab = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {terms.map((term) => (
                                     <tr key={term.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="py-4 px-4 text-sm text-gray-900 font-medium">{term.code}</td>
+                                        <td className="py-4 px-4 text-sm text-gray-900 font-medium">{term.crTerm?.name || '-'}</td>
                                         <td className="py-4 px-4 text-sm text-gray-900 font-medium">{term.name}</td>
                                         <td className="py-4 px-4 text-sm text-gray-500">{term.remarks || '-'}</td>
                                         <td className="py-4 px-4 text-sm text-right">
@@ -161,7 +178,7 @@ const TermsTab = () => {
                                 onClick={() => {
                                     setShowModal(false);
                                     setEditingId(null);
-                                    setTermForm({ code: '', name: '', remarks: '' });
+                                    setTermForm({ crTermId: '', name: '', remarks: '', startDate: '', endDate: '' });
                                 }}
                                 className="text-gray-500 hover:text-gray-700 font-bold text-xl bg-transparent border-none"
                             >
@@ -172,15 +189,19 @@ const TermsTab = () => {
                         <div className="modal-body">
                             <form onSubmit={handleCreateTerm} className="space-y-4">
                                 <div className="form-group">
-                                    <label className="label">Term Code *</label>
-                                    <input
-                                        type="text"
+                                    <label className="label">Term Category (Master Term) *</label>
+                                    <select
                                         required
-                                        placeholder="e.g. TERM-01"
                                         className="input-field"
-                                        value={termForm.code}
-                                        onChange={(e) => setTermForm({ ...termForm, code: e.target.value })}
-                                    />
+                                        value={termForm.crTermId}
+                                        onChange={(e) => setTermForm({ ...termForm, crTermId: e.target.value })}
+                                    >
+                                        <option value="">Select Master Term</option>
+                                        {crTerms.map(ct => (
+                                            <option key={ct.id} value={ct.id}>{ct.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-gray-500 mt-1">Manage categories in Settings &gt; Manage Terms</p>
                                 </div>
                                 <div className="form-group">
                                     <label className="label">Term Name *</label>
@@ -231,7 +252,7 @@ const TermsTab = () => {
                                         onClick={() => {
                                             setShowModal(false);
                                             setEditingId(null);
-                                            setTermForm({ code: '', name: '', remarks: '', startDate: '', endDate: '' });
+                                            setTermForm({ crTermId: '', name: '', remarks: '', startDate: '', endDate: '' });
                                         }}
                                         className="btn btn-secondary mr-2"
                                     >

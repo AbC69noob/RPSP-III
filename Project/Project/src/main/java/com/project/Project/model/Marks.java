@@ -33,6 +33,9 @@ public class Marks {
 
     private String remark;
 
+    @Column(name = "publish_status", nullable = false)
+    private Boolean publishStatus = false;
+
     @Column(name = "uploaded_at")
     private Timestamp uploadedAt;
 
@@ -92,6 +95,14 @@ public class Marks {
 
     public void setRemark(String remark) {
         this.remark = remark;
+    }
+
+    public Boolean getPublishStatus() {
+        return publishStatus;
+    }
+
+    public void setPublishStatus(Boolean publishStatus) {
+        this.publishStatus = publishStatus;
     }
 
     public Timestamp getUploadedAt() {

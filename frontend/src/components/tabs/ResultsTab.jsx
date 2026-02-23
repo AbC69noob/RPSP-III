@@ -9,16 +9,17 @@ const ResultsTab = () => {
     const [terms, setTerms] = useState([]);
     const [programs, setPrograms] = useState([]);
     const [studentBatches, setStudentBatches] = useState([]);
+    const [semesters, setSemesters] = useState([]);
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
 
     // Filter states
     const [selectedStudentBatchId, setSelectedStudentBatchId] = useState('');
     const [selectedProgramId, setSelectedProgramId] = useState('');
-    const [selectedSemester, setSelectedSemester] = useState('');
+    const [selectedSemesterId, setSelectedSemesterId] = useState('');
     const [selectedTermId, setSelectedTermId] = useState('');
 
-    const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
+    // const semesters = [1, 2, 3, 4, 5, 6, 7, 8]; // Removed hardcoded semesters
 
     useEffect(() => {
         fetchInitialData();
@@ -27,14 +28,16 @@ const ResultsTab = () => {
     const fetchInitialData = async () => {
         setInitialLoading(true);
         try {
-            const [termsRes, programsRes, batchesRes] = await Promise.all([
+            const [termsRes, programsRes, batchesRes, semsRes] = await Promise.all([
                 api.get('/terms'),
                 api.get('/programs'),
-                api.get('/student-batches')
+                api.get('/student-batches'),
+                api.get('/semesters')
             ]);
             setTerms(termsRes.data);
             setPrograms(programsRes.data);
             setStudentBatches(batchesRes.data);
+            setSemesters(semsRes.data.sort((a, b) => a.semesterNumber - b.semesterNumber));
         } catch (error) {
             toast.error('Failed to load initial data');
         } finally {
@@ -43,7 +46,7 @@ const ResultsTab = () => {
     };
 
     const handleLoadResults = async () => {
-        if (!selectedStudentBatchId || !selectedProgramId || !selectedSemester || !selectedTermId) {
+        if (!selectedStudentBatchId || !selectedProgramId || !selectedSemesterId || !selectedTermId) {
             toast.warning('Please select all filters');
             return;
         }
@@ -53,7 +56,7 @@ const ResultsTab = () => {
             const response = await api.get('/marks/search', {
                 params: {
                     programId: selectedProgramId,
-                    semester: selectedSemester,
+                    semesterId: selectedSemesterId,
                     termId: selectedTermId,
                     studentBatchId: selectedStudentBatchId
                 }
@@ -129,11 +132,11 @@ const ResultsTab = () => {
                         <label><TableIcon size={14} className="inline mr-1" /> Semester</label>
                         <select
                             className="results-select"
-                            value={selectedSemester}
-                            onChange={(e) => setSelectedSemester(e.target.value)}
+                            value={selectedSemesterId}
+                            onChange={(e) => setSelectedSemesterId(e.target.value)}
                         >
                             <option value="">Select Semester</option>
-                            {semesters.map(s => <option key={s} value={s}>Semester {s}</option>)}
+                            {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                         </select>
                     </div>
                     <div className="filter-group">

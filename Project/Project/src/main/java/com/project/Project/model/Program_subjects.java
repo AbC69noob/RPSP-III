@@ -18,7 +18,9 @@ public class Program_subjects {
     @JoinColumn(name = "subject_id", nullable = false)
     private Subjects subject;
 
-    private Integer semester;
+    @ManyToOne
+    @JoinColumn(name = "semester_id")
+    private Semester semester;
 
     /* Getters and Setters */
 
@@ -46,11 +48,11 @@ public class Program_subjects {
         this.subject = subject;
     }
 
-    public Integer getSemester() {
+    public Semester getSemester() {
         return semester;
     }
 
-    public void setSemester(Integer semester) {
+    public void setSemester(Semester semester) {
         this.semester = semester;
     }
 }

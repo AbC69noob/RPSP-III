@@ -50,7 +50,7 @@ public class MarksController {
 
     @GetMapping("/my-marks")
     public List<StudentMarksDto> getMyMarks(
-            @RequestParam Integer semester,
+            @RequestParam Long semesterId,
             @RequestParam Long termId) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -61,7 +61,7 @@ public class MarksController {
 
         List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(
                 student.getProgram().getId(),
-                semester,
+                semesterId,
                 termId,
                 student.getStudentBatch().getId());
 
@@ -72,6 +72,7 @@ public class MarksController {
 
         marksList = marksList.stream()
                 .filter(m -> m.getStudent().getId().equals(student.getId()))
+                .filter(m -> m.getPublishStatus() != null && m.getPublishStatus()) // ONLY PUBLISHED MARKS
                 .toList();
 
         // Convert to DTO
@@ -92,10 +93,10 @@ public class MarksController {
     @GetMapping("/search")
     public List<StudentMarksDto> searchMarks(
             @RequestParam Long programId,
-            @RequestParam Integer semester,
+            @RequestParam Long semesterId,
             @RequestParam Long termId,
             @RequestParam Long studentBatchId) {
-        List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(programId, semester, termId, studentBatchId);
+        List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(programId, semesterId, termId, studentBatchId);
 
         // Map studentId -> DTO
         Map<Long, StudentMarksDto> studentMap = new HashMap<>();
@@ -153,13 +154,51 @@ public class MarksController {
             Terms term = termRepo.findById(marks.getTerm().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Term not found"));
 
+            // Check if existing mark is already published. We shouldn't update if published.
+            marksRepo.findById(marks.getId() != null ? marks.getId() : -1L).ifPresent(existingMark -> {
+                if (existingMark.getPublishStatus() != null && existingMark.getPublishStatus()) {
+                    throw new IllegalStateException("Cannot modify published marks for student " + student.getName());
+                }
+            });
+
             marks.setStudent(student);
             marks.setSubject(subject);
             marks.setTerm(term);
+            // new marks defaults to false if not set
+            if(marks.getPublishStatus() == null) {
+                marks.setPublishStatus(false);
+            }
+            // but we don't allow teachers to publish. They can only submit unpublished.
+            if(marks.getId() != null) {
+                // Keep the existing publish status if updating (prevent teacher from publishing)
+                marksRepo.findById(marks.getId()).ifPresent(m -> marks.setPublishStatus(m.getPublishStatus()));
+            }
+
             marks.setUploadedBy(uploader);
             marks.setUploadedAt(new Timestamp(System.currentTimeMillis()));
         }
 
         return marksRepo.saveAll(marksList);
+    }
+
+    @PutMapping("/publish")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('admin')")
+    public org.springframework.http.ResponseEntity<?> publishMarks(
+            @RequestParam Long programId,
+            @RequestParam Long semesterId,
+            @RequestParam Long termId,
+            @RequestParam Long studentBatchId) {
+        
+        List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(programId, semesterId, termId, studentBatchId);
+        if (marksList.isEmpty()) {
+             return org.springframework.http.ResponseEntity.badRequest().body("No marks found to publish for the given criteria.");
+        }
+
+        for (Marks m : marksList) {
+            m.setPublishStatus(true);
+        }
+        
+        marksRepo.saveAll(marksList);
+        return org.springframework.http.ResponseEntity.ok("Successfully published " + marksList.size() + " marks.");
     }
 }

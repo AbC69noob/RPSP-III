@@ -27,17 +27,20 @@ public class SubjectsController {
     private final TeachersRepository teachersRepo;
     private final TeacherSubjectsRepository teacherSubjectsRepo;
     private final com.project.Project.repository.CourseBatchRepository courseBatchRepo;
+    private final com.project.Project.repository.SemesterRepository semesterRepo;
 
     public SubjectsController(SubjectsRepository repo,
             ProgramsRepository programsRepo,
             TeachersRepository teachersRepo,
             TeacherSubjectsRepository teacherSubjectsRepo,
-            com.project.Project.repository.CourseBatchRepository courseBatchRepo) {
+            com.project.Project.repository.CourseBatchRepository courseBatchRepo,
+            com.project.Project.repository.SemesterRepository semesterRepo) {
         this.repo = repo;
         this.programsRepo = programsRepo;
         this.teachersRepo = teachersRepo;
         this.teacherSubjectsRepo = teacherSubjectsRepo;
         this.courseBatchRepo = courseBatchRepo;
+        this.semesterRepo = semesterRepo;
     }
 
     // ADMIN + TEACHER can view
@@ -51,11 +54,11 @@ public class SubjectsController {
     @PreAuthorize("hasAnyAuthority('admin','teacher')")
     public List<Subjects> getFiltered(
             @RequestParam Long programId,
-            @RequestParam Integer semester,
+            @RequestParam Long semesterId,
             @RequestParam(required = false) Long courseBatchId) {
-        System.out.println("Filtering subjects: programId=" + programId + ", semester=" + semester + ", courseBatchId="
+        System.out.println("Filtering subjects: programId=" + programId + ", semesterId=" + semesterId + ", courseBatchId="
                 + courseBatchId);
-        List<Subjects> result = repo.findFilteredSubjects(programId, semester, courseBatchId);
+        List<Subjects> result = repo.findFilteredSubjects(programId, semesterId, courseBatchId);
         System.out.println("Found " + result.size() + " subjects");
         return result;
     }
@@ -76,7 +79,11 @@ public class SubjectsController {
         subject.setName(request.getName());
         subject.setFullMark(request.getFullMark());
         subject.setPassMarks(request.getPassMarks());
-        subject.setSemester(request.getSemester());
+        
+        com.project.Project.model.Semester sem = semesterRepo.findById(request.getSemesterId())
+                .orElseThrow(() -> new RuntimeException("Semester not found"));
+        subject.setSemester(sem);
+
         subject.setProgram(program);
 
         // 3. Fetch Course Batch if provided
@@ -99,7 +106,7 @@ public class SubjectsController {
             ts.setTeacher(teacher);
             ts.setSubject(savedSubject);
             ts.setStudentProgram(program);
-            ts.setStudentSemester(request.getSemester());
+            ts.setStudentSemester(sem);
 
             teacherSubjectsRepo.save(ts);
         }

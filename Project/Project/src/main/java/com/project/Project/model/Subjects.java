@@ -13,7 +13,9 @@ public class Subjects {
 
     private String code;
     private String name;
-    private Integer semester;
+    @ManyToOne
+    @JoinColumn(name = "semester_id")
+    private Semester semester;
 
     @ManyToOne
     @JoinColumn(name = "program_id")
@@ -89,11 +91,11 @@ public class Subjects {
         return createdAt;
     }
 
-    public Integer getSemester() {
+    public Semester getSemester() {
         return semester;
     }
 
-    public void setSemester(Integer semester) {
+    public void setSemester(Semester semester) {
         this.semester = semester;
     }
 

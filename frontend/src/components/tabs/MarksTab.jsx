@@ -25,13 +25,14 @@ const MarksTab = () => {
     const [terms, setTerms] = useState([]);
     const [programs, setPrograms] = useState([]);
     const [studentBatches, setStudentBatches] = useState([]);
+    const [semesters, setSemesters] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Filter states
     const [selectedStudentBatchId, setSelectedStudentBatchId] = useState('');
     const [selectedProgramId, setSelectedProgramId] = useState('');
-    const [selectedSemester, setSelectedSemester] = useState('');
+    const [selectedSemesterId, setSelectedSemesterId] = useState('');
     const [selectedTermId, setSelectedTermId] = useState('');
 
     const [filtersApplied, setFiltersApplied] = useState(false);
@@ -45,7 +46,7 @@ const MarksTab = () => {
     // Multi-subject state: { [subjectId]: { [studentId]: { obtainedMarks, remark, id } } }
     const [marksEntry, setMarksEntry] = useState({});
 
-    const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
+    // const semesters = [1, 2, 3, 4, 5, 6, 7, 8]; // Removed hardcoded semesters
 
     // Grouping logic for teacher assignments
     const groupedAssignments = useMemo(() => {
@@ -87,23 +88,24 @@ const MarksTab = () => {
 
     // Auto-fetch subjects for admin view when filters change
     useEffect(() => {
-        if (!isTeacher && selectedStudentBatchId && selectedProgramId && selectedSemester) {
+        if (!isTeacher && selectedStudentBatchId && selectedProgramId && selectedSemesterId) {
             fetchFilteredSubjects();
         }
-    }, [selectedStudentBatchId, selectedProgramId, selectedSemester]);
+    }, [selectedStudentBatchId, selectedProgramId, selectedSemesterId]);
 
     const isTeacher = currentUser?.role?.toLowerCase() === 'teacher';
 
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const [marksRes, studentsRes, termsRes, programsRes, profileRes, batchesRes] = await Promise.all([
+            const [marksRes, studentsRes, termsRes, programsRes, profileRes, batchesRes, semsRes] = await Promise.all([
                 api.get('/marks'),
                 api.get('/students'),
                 api.get('/terms'),
                 api.get('/programs'),
                 api.get('/profile'),
-                api.get('/student-batches')
+                api.get('/student-batches'),
+                api.get('/semesters')
             ]);
             setMarks(marksRes.data);
             setAllStudents(studentsRes.data);
@@ -111,6 +113,7 @@ const MarksTab = () => {
             setPrograms(programsRes.data);
             setCurrentUser(profileRes.data);
             setStudentBatches(batchesRes.data);
+            setSemesters(semsRes.data.sort((a, b) => a.semesterNumber - b.semesterNumber));
 
             if (profileRes.data.role.toLowerCase() === 'teacher' && profileRes.data.teacherId) {
                 const asmRes = await api.get(`/teacher-subjects/teacher/${profileRes.data.teacherId}`);
@@ -130,7 +133,7 @@ const MarksTab = () => {
             const response = await api.get('/subjects/filter', {
                 params: {
                     programId: Number(selectedProgramId),
-                    semester: Number(selectedSemester),
+                    semesterId: Number(selectedSemesterId),
                     courseBatchId: batch?.courseBatch?.id
                 }
             });
@@ -143,7 +146,7 @@ const MarksTab = () => {
     };
 
     const handleApplyFilters = async () => {
-        if (!selectedStudentBatchId || !selectedProgramId || !selectedSemester || !selectedTermId) {
+        if (!selectedStudentBatchId || !selectedProgramId || !selectedSemesterId || !selectedTermId) {
             toast.warning('Complete filters first');
             return;
         }
@@ -154,7 +157,7 @@ const MarksTab = () => {
             const response = await api.get('/students/filter', {
                 params: {
                     programId: Number(selectedProgramId),
-                    semester: Number(selectedSemester),
+                    semesterId: Number(selectedSemesterId),
                     courseBatchId: batch?.courseBatch?.id
                 }
             });
@@ -274,7 +277,7 @@ const MarksTab = () => {
             const response = await api.get('/students/filter', {
                 params: {
                     programId: assignment.studentProgram?.id,
-                    semester: assignment.studentSemester,
+                    semesterId: assignment.studentSemester?.id,
                     courseBatchId: assignment.subject?.courseBatch?.id
                 }
             });
@@ -458,9 +461,9 @@ const MarksTab = () => {
                         </div>
                         <div className="filter-item">
                             <label>Semester</label>
-                            <select className="modern-select" value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
+                            <select className="modern-select" value={selectedSemesterId} onChange={(e) => setSelectedSemesterId(e.target.value)}>
                                 <option value="">Select Semester</option>
-                                {semesters.map(s => <option key={s} value={s}>Semester {s}</option>)}
+                                {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
                         </div>
                         <div className="filter-item">

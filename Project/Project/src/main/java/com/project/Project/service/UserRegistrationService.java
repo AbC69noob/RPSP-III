@@ -11,6 +11,7 @@ import com.project.Project.repository.StudentsRepository;
 import com.project.Project.repository.UsersRepository;
 import com.project.Project.repository.ProgramsRepository;
 import com.project.Project.repository.StudentBatchRepository;
+import com.project.Project.repository.SemesterRepository;
 import com.project.Project.model.StudentBatch;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class UserRegistrationService {
     private final StudentsRepository studentsRepo;
     private final ProgramsRepository programsRepo;
     private final StudentBatchRepository studentBatchRepo;
+    private final SemesterRepository semesterRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserRegistrationService(
@@ -35,12 +37,14 @@ public class UserRegistrationService {
             StudentsRepository studentsRepo,
             ProgramsRepository programsRepo,
             StudentBatchRepository studentBatchRepo,
+            SemesterRepository semesterRepository,
             PasswordEncoder passwordEncoder) {
         this.usersRepo = usersRepo;
         this.teachersRepo = teachersRepo;
         this.studentsRepo = studentsRepo;
         this.programsRepo = programsRepo;
         this.studentBatchRepo = studentBatchRepo;
+        this.semesterRepository = semesterRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -119,7 +123,20 @@ public class UserRegistrationService {
         student.setUser(user);
         student.setName(request.getUsername());
         student.setRollNo(request.getRollNo());
-        student.setSemester(request.getSemester() != null ? request.getSemester() : 1);
+
+        if (request.getSemesterId() != null) {
+            com.project.Project.model.Semester sem = semesterRepository.findById(request.getSemesterId())
+                    .orElseThrow(() -> new RuntimeException("Semester not found with id: " + request.getSemesterId()));
+            student.setSemester(sem);
+        } else {
+            com.project.Project.model.Semester defaultSem = semesterRepository.findBySemesterNumber(1)
+                    .orElseGet(() -> {
+                        com.project.Project.model.Semester newSem = new com.project.Project.model.Semester("Semester 1", 1);
+                        return semesterRepository.save(newSem);
+                    });
+            student.setSemester(defaultSem);
+        }
+
         student.setPermanentAddress(request.getPermanentAddress());
         student.setTemporaryAddress(request.getTemporaryAddress());
         student.setGender(request.getGender());
