@@ -8,7 +8,10 @@ import {
     Calendar,
     GraduationCap,
     User,
-    CheckCircle2
+    CheckCircle2,
+    ChevronRight,
+    ChevronLeft,
+    Home
 } from 'lucide-react';
 
 const SubjectsTab = () => {
@@ -18,6 +21,8 @@ const SubjectsTab = () => {
     const [courseBatches, setCourseBatches] = useState([]);
     const [semesters, setSemesters] = useState([]);
     const [assignments, setAssignments] = useState([]);
+    const [activeBatch, setActiveBatch] = useState(null);
+    const [activeProgram, setActiveProgram] = useState(null);
 
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [showRevisionModal, setShowRevisionModal] = useState(false);
@@ -165,86 +170,186 @@ const SubjectsTab = () => {
             </div>
 
             <div className="content-wrapper">
-                {courseBatches
-                    .sort((a, b) => b.startYear - a.startYear)
-                    .map(batch => (
-                        <div key={batch.id} className="batch-card">
-                            <div className="batch-header-gradient">
-                                <Calendar size={20} />
-                                <div>
-                                    <h2>Revised on {batch.startYear}</h2>
-                                    <p>{batch.description || 'General Revision'}</p>
+                {/* Navigation Breadcrumbs */}
+                {(activeBatch || activeProgram) && (
+                    <div className="breadcrumb-nav">
+                        <button onClick={() => { setActiveBatch(null); setActiveProgram(null); }} className="breadcrumb-item">
+                            <Home size={16} /> Home
+                        </button>
+                        {activeBatch && (
+                            <>
+                                <ChevronRight size={16} className="breadcrumb-separator" />
+                                <button
+                                    onClick={() => {
+                                        if (activeProgram) {
+                                            setActiveProgram(null);
+                                        } else {
+                                            setActiveBatch(null);
+                                        }
+                                    }}
+                                    className={`breadcrumb-item ${!activeProgram ? 'active' : ''}`}
+                                >
+                                    {activeBatch.startYear} Batch
+                                </button>
+                            </>
+                        )}
+                        {activeProgram && (
+                            <>
+                                <ChevronRight size={16} className="breadcrumb-separator" />
+                                <button
+                                    onClick={() => setActiveProgram(null)}
+                                    className="breadcrumb-item active"
+                                >
+                                    {activeProgram.name}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {activeBatch && (
+                    <div
+                        key={`rev-header-${activeBatch.id}`}
+                        className="revision-highlight-header animate-scaleIn clickable"
+                        onClick={() => {
+                            if (activeProgram) {
+                                setActiveProgram(null);
+                            } else {
+                                setActiveBatch(null);
+                            }
+                        }}
+                        title="Click to go back"
+                    >
+                        <Calendar size={20} />
+                        <div className="header-text-group">
+                            <span className="header-subtitle">Course Revision</span>
+                            <span>Revised on <strong>{activeBatch.startYear} Batch</strong></span>
+                        </div>
+                        <ChevronLeft size={20} className="ml-auto opacity-70" />
+                    </div>
+                )}
+
+                {!activeBatch ? (
+                    /* Level 1: Course Batches */
+                    <div className="batch-grid" key="batch-grid">
+                        {courseBatches
+                            .sort((a, b) => b.startYear - a.startYear)
+                            .map((batch, idx) => (
+                                <div
+                                    key={batch.id}
+                                    className={`batch-card clickable animate-fadeInUp stagger-${(idx % 5) + 1}`}
+                                    onClick={() => setActiveBatch(batch)}
+                                >
+                                    <div className="batch-header-gradient">
+                                        <Calendar size={20} />
+                                        <div>
+                                            <h2>Revised on {batch.startYear}</h2>
+                                            <p>{batch.description || 'General Revision'}</p>
+                                        </div>
+                                        <ChevronRight size={20} className="ml-auto" />
+                                    </div>
+                                </div>
+                            ))}
+                    </div>
+                ) : !activeProgram ? (
+                    /* Level 2: Programs */
+                    <div className="program-grid" key={`programs-${activeBatch.id}`}>
+                        {programs.map((prog, idx) => (
+                            <div
+                                key={prog.id}
+                                className={`program-card clickable animate-fadeInUp stagger-${(idx % 5) + 1}`}
+                                onClick={() => setActiveProgram(prog)}
+                            >
+                                <div className="program-card-content">
+                                    <GraduationCap size={24} className="program-icon" />
+                                    <h3>{prog.name}</h3>
+                                    <ChevronRight size={20} className="ml-auto text-gray-400" />
                                 </div>
                             </div>
-
-                            <div className="batch-content">
-                                {programs.map(prog => {
-                                    const list = subjects.filter(
-                                        s => s.courseBatch?.id === batch.id && s.program?.id === prog.id
-                                    );
-                                    const bySem = list.reduce((a, s) => {
-                                        const semKey = s.semester?.name || 'Unknown';
-                                        a[semKey] = a[semKey] || [];
-                                        a[semKey].push(s);
-                                        return a;
-                                    }, {});
-
-                                    return (
-                                        <div key={prog.id}>
-                                            <div className="program-header">
-                                                <h3>
-                                                    <GraduationCap size={18} /> {prog.name}
-                                                </h3>
-                                                <button
-                                                    className="add-subject-btn"
-                                                    onClick={() => handleOpenSubjectModal(batch.id, prog.id)}
-                                                >
-                                                    <Plus size={14} /> Add Subject
-                                                </button>
-                                            </div>
-
-                                            {Object.entries(bySem).map(([sem, subs]) => (
-                                                <div key={sem}>
-                                                    <span className="semester-label">Semester {sem}</span>
-                                                    <div className="subject-grid">
-                                                        {subs.map(sub => (
-                                                            <div key={sub.id} className="modern-subject-card">
-                                                                <div className="action-overlay">
-                                                                    <button onClick={() => {
-                                                                        setEditSubject(sub);
-                                                                        setSelectedTeacher(getAssignedTeacherId(sub.id));
-                                                                    }}>
-                                                                        <Plus size={14} />
-                                                                    </button>
-                                                                    <button onClick={() => setConfirmDeleteId(sub.id)}>
-                                                                        <Trash2 size={14} />
-                                                                    </button>
-                                                                </div>
-
-                                                                <span className="subject-code-badge">{sub.code}</span>
-                                                                <h4 className="subject-name-text">{sub.name}</h4>
-
-                                                                <div className="subject-footer">
-                                                                    <div className="subject-stats-row">
-                                                                        <span>FM {sub.fullMark}</span>
-                                                                        <span>PM {sub.passMarks}</span>
-                                                                    </div>
-                                                                    <div className={`teacher-badge ${getAssignedTeacherId(sub.id) ? 'teacher-assigned' : 'teacher-unassigned'}`}>
-                                                                        <User size={12} />
-                                                                        {getAssignedTeacherName(sub.id)}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    );
-                                })}
+                        ))}
+                    </div>
+                ) : (
+                    /* Level 3: Subjects */
+                    <div className="batch-card animate-scaleIn" key={`subjects-${activeBatch.id}-${activeProgram.id}`}>
+                        <div
+                            className="batch-header-gradient clickable"
+                            onClick={() => setActiveProgram(null)}
+                            title="Click to go back to program list"
+                        >
+                            <GraduationCap size={20} />
+                            <div>
+                                <h2>{activeProgram.name}</h2>
+                                <p>Batch {activeBatch.startYear}</p>
                             </div>
+                            <button
+                                className="add-subject-btn-white"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenSubjectModal(activeBatch.id, activeProgram.id);
+                                }}
+                            >
+                                <Plus size={16} /> Add Subject
+                            </button>
                         </div>
-                    ))}
+
+                        <div className="batch-content">
+                            {(() => {
+                                const list = subjects.filter(
+                                    s => s.courseBatch?.id === activeBatch.id && s.program?.id === activeProgram.id
+                                );
+                                const bySem = list.reduce((a, s) => {
+                                    const semKey = s.semester?.name || 'Unknown';
+                                    a[semKey] = a[semKey] || [];
+                                    a[semKey].push(s);
+                                    return a;
+                                }, {});
+
+                                return Object.entries(bySem).length > 0 ? (
+                                    Object.entries(bySem).map(([sem, subs]) => (
+                                        <div key={sem}>
+                                            <span className="semester-label">Semester {sem}</span>
+                                            <div className="subject-grid">
+                                                {subs.map(sub => (
+                                                    <div key={sub.id} className="modern-subject-card">
+                                                        <div className="action-overlay">
+                                                            <button onClick={() => {
+                                                                setEditSubject(sub);
+                                                                setSelectedTeacher(getAssignedTeacherId(sub.id));
+                                                            }}>
+                                                                <Plus size={14} />
+                                                            </button>
+                                                            <button onClick={() => setConfirmDeleteId(sub.id)}>
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+
+                                                        <span className="subject-code-badge">{sub.code}</span>
+                                                        <h4 className="subject-name-text">{sub.name}</h4>
+
+                                                        <div className="subject-footer">
+                                                            <div className="subject-stats-row">
+                                                                <span>FM {sub.fullMark}</span>
+                                                                <span>PM {sub.passMarks}</span>
+                                                            </div>
+                                                            <div className={`teacher-badge ${getAssignedTeacherId(sub.id) ? 'teacher-assigned' : 'teacher-unassigned'}`}>
+                                                                <User size={12} />
+                                                                {getAssignedTeacherName(sub.id)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="empty-state">
+                                        <p>No subjects found for this program and batch.</p>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Modals */}
