@@ -22,6 +22,15 @@ public interface ApiService {
     @POST("/users/change-password")
     Call<okhttp3.ResponseBody> changePassword(@Header("Authorization") String token, @Body Map<String, String> request);
 
+    @POST("/auth/forgot-password")
+    Call<okhttp3.ResponseBody> forgotPassword(@Body Map<String, String> request);
+
+    @POST("/auth/verify-otp")
+    Call<okhttp3.ResponseBody> verifyOtp(@Body Map<String, String> request);
+
+    @POST("/auth/reset-password")
+    Call<okhttp3.ResponseBody> resetPassword(@Body Map<String, String> request);
+
     @GET("/profile")
     Call<ProfileDto> getProfile(@Header("Authorization") String token);
 
