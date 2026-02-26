@@ -15,6 +15,10 @@ const UsersTab = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const currentUserId = currentUser?.id;
+    const currentUsername = currentUser?.username;
+    const hideCurrentAdmin = currentUser?.role === 'admin';
 
     // Initial Form State
     const initialFormState = {
@@ -190,6 +194,15 @@ const UsersTab = () => {
             toast.error('Failed to create user. Please try again.');
         }
     };
+
+    const visibleUsers = users
+        .filter(user => filterRole === '' || user.role.toLowerCase() === filterRole.toLowerCase())
+        .filter(user => {
+            if (!hideCurrentAdmin) return true;
+            if (currentUserId != null) return user.id !== currentUserId;
+            if (currentUsername) return user.username !== currentUsername;
+            return true;
+        });
 
     return (
         <div className="space-y-6 w-full">
@@ -489,9 +502,7 @@ const UsersTab = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {users
-                                    .filter(user => filterRole === '' || user.role.toLowerCase() === filterRole.toLowerCase())
-                                    .map((user) => (
+                                {visibleUsers.map((user) => (
                                         <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                                             <td className="py-4 px-4 text-sm text-gray-900 font-medium">{user.username}</td>
                                             <td className="py-4 px-4 text-sm text-gray-500">{user.email}</td>
@@ -513,7 +524,7 @@ const UsersTab = () => {
                                             </td>
                                         </tr>
                                     ))}
-                                {users.filter(user => filterRole === '' || user.role.toLowerCase() === filterRole.toLowerCase()).length === 0 && (
+                                {visibleUsers.length === 0 && (
                                     <tr>
                                         <td colSpan="4" className="text-center py-8 text-gray-500">
                                             No users found.
