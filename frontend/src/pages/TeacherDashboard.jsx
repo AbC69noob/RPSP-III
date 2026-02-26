@@ -183,9 +183,16 @@ const TeacherDashboard = () => {
     };
 
     const handleMarkChange = (subjId, studentId, field, value) => {
-        if (field === 'obtainedMarks' && value !== '' && Number(value) < 0) {
-            toast.warn("Marks cannot be negative");
-            return;
+        if (field === 'obtainedMarks' && value !== '') {
+            const numValue = Number(value);
+            if (numValue < 0) {
+                toast.warn("Marks cannot be negative");
+                return;
+            }
+            if (numValue > 100) {
+                toast.warn("Marks cannot exceed 100");
+                return;
+            }
         }
         setMarksEntry(prev => ({
             ...prev,
@@ -465,9 +472,6 @@ const TeacherDashboard = () => {
                                 </div>
                                 <div className="td-term-body">
                                     <h3 className="td-term-name">{term.name}</h3>
-                                    <p className="td-term-dates">
-                                        <Clock size={12} /> {new Date(term.startDate).toLocaleDateString()} &nbsp;–&nbsp; {new Date(term.endDate).toLocaleDateString()}
-                                    </p>
                                 </div>
                                 <div className="td-term-arrow">
                                     <ArrowRight size={18} />

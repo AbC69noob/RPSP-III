@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import './ResultsTab.css';
-import { RefreshCcw, Search, GraduationCap, Users, Calendar, Table as TableIcon } from 'lucide-react';
+import { RefreshCcw, Search, GraduationCap, Users, Calendar, Table as TableIcon, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
 
 const ResultsTab = () => {
@@ -71,6 +72,37 @@ const ResultsTab = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleExportExcel = () => {
+        if (results.length === 0) {
+            toast.warning('No results to export');
+            return;
+        }
+
+        const exportData = results.map(student => {
+            const row = {
+                'Roll No': student.rollNo,
+                'Student Name': student.studentName
+            };
+
+            allSubjects.forEach(sub => {
+                row[sub] = student.marks[sub] ? student.marks[sub].obtained : '-';
+            });
+
+            row['Total'] = student.totalObtained;
+            row['Percentage'] = `${calculatePercentage(student.totalObtained, student.totalFull)}%`;
+
+            return row;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Academic Results');
+
+        const fileName = `Results_${selectedProgramId}_Sem${selectedSemesterId}_Term${selectedTermId}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
+        toast.success('Excel file exported successfully!');
     };
 
     // Extract unique subject names from results to create table headers
@@ -155,7 +187,16 @@ const ResultsTab = () => {
                         </select>
                     </div>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-3">
+                    {results.length > 0 && (
+                        <button
+                            className="btn-load bg-green-600 hover:bg-green-700"
+                            onClick={handleExportExcel}
+                        >
+                            <Download size={18} />
+                            Export to Excel
+                        </button>
+                    )}
                     <button
                         className="btn-load"
                         onClick={handleLoadResults}

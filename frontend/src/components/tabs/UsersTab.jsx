@@ -10,6 +10,7 @@ const UsersTab = () => {
     const [showModal, setShowModal] = useState(false);
     const [showBatchModal, setShowBatchModal] = useState(false); // Student Batch Modal
     const [programs, setPrograms] = useState([]);
+    const [semesters, setSemesters] = useState([]); // List of semesters
     const [studentBatches, setStudentBatches] = useState([]); // List of student batches
     const [filterRole, setFilterRole] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -34,7 +35,7 @@ const UsersTab = () => {
         // Student specific
         rollNo: '',
         studentBatchId: '', // Changed from batch (string) to ID
-        semester: '',
+        semesterId: '', // Changed from semester (string) to ID
         programId: '',
         // Teacher specific
         employeeId: '',
@@ -54,6 +55,7 @@ const UsersTab = () => {
     useEffect(() => {
         fetchUsers();
         fetchPrograms();
+        fetchSemesters();
         fetchStudentBatches();
     }, []);
 
@@ -83,6 +85,15 @@ const UsersTab = () => {
             setStudentBatches(response.data);
         } catch (error) {
             console.error('Failed to fetch student batches:', error);
+        }
+    };
+
+    const fetchSemesters = async () => {
+        try {
+            const response = await api.get('/semesters');
+            setSemesters(response.data.sort((a, b) => a.semesterNumber - b.semesterNumber));
+        } catch (error) {
+            console.error('Failed to fetch semesters:', error);
         }
     };
 
@@ -151,6 +162,7 @@ const UsersTab = () => {
                     temporaryAddress: formData.temporaryAddress,
                     rollNo: rollNoNum,
                     batchId: formData.studentBatchId ? Number(formData.studentBatchId) : null,
+                    semesterId: formData.semesterId ? Number(formData.semesterId) : null,
                     programId: formData.programId ? Number(formData.programId) : null
                 };
             } else if (formData.role === 'teacher') {
@@ -396,6 +408,21 @@ const UsersTab = () => {
                                                 ))}
                                             </select>
                                         </div>
+                                        <div className="form-group">
+                                            <label className="label">Semester *</label>
+                                            <select
+                                                name="semesterId"
+                                                required
+                                                className="input-field"
+                                                value={formData.semesterId}
+                                                onChange={handleInputChange}
+                                            >
+                                                <option value="">Select Semester</option>
+                                                {semesters.map(sem => (
+                                                    <option key={sem.id} value={sem.id}>{sem.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
                                 )}
 
@@ -503,27 +530,27 @@ const UsersTab = () => {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {visibleUsers.map((user) => (
-                                        <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="py-4 px-4 text-sm text-gray-900 font-medium">{user.username}</td>
-                                            <td className="py-4 px-4 text-sm text-gray-500">{user.email}</td>
-                                            <td className="py-4 px-4 text-sm text-gray-500">
-                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="py-4 px-4 text-sm text-gray-900 font-medium">{user.username}</td>
+                                        <td className="py-4 px-4 text-sm text-gray-500">{user.email}</td>
+                                        <td className="py-4 px-4 text-sm text-gray-500">
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                 ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                                                        user.role === 'teacher' ? 'bg-blue-100 text-blue-800' :
-                                                            'bg-green-100 text-green-800'}`}>
-                                                    {user.role}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-4 text-sm font-medium">
-                                                <button
-                                                    onClick={() => deleteUser(user.id)}
-                                                    className="btn-danger text-xs px-3 py-1"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                    user.role === 'teacher' ? 'bg-blue-100 text-blue-800' :
+                                                        'bg-green-100 text-green-800'}`}>
+                                                {user.role}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-4 text-sm font-medium">
+                                            <button
+                                                onClick={() => deleteUser(user.id)}
+                                                className="btn-danger text-xs px-3 py-1"
+                                            >
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
                                 {visibleUsers.length === 0 && (
                                     <tr>
                                         <td colSpan="4" className="text-center py-8 text-gray-500">
