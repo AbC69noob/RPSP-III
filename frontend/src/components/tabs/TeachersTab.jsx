@@ -306,6 +306,14 @@ const TeachersTab = () => {
     if (loading) return <div className="card">Loading...</div>;
 
     const showSubjects = selectedBatch || selectedProgram || selectedSemesterId;
+    const allFilteredAssignedToSelected = !!selectedTeacher
+        && filteredSubjects.length > 0
+        && filteredSubjects.every(subject => {
+            const assignedTeacherId = getAssignedTeacherId(subject.id);
+            return assignedTeacherId && assignedTeacherId === Number(selectedTeacher);
+        });
+    const allFilteredSelected = filteredSubjects.length > 0 && selectedSubjects.length === filteredSubjects.length;
+    const showAssignButton = !(allFilteredAssignedToSelected && allFilteredSelected);
 
     return (
         <div className="card">
@@ -480,13 +488,15 @@ const TeachersTab = () => {
                                         <span className="font-medium">{selectedSubjects.length} subject(s) selected</span>
                                     )}
                                 </div>
-                                <button
-                                    onClick={handleBulkAssign}
-                                    disabled={!selectedTeacher || selectedSubjects.length === 0}
-                                    className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Assign to Teacher
-                                </button>
+                                {showAssignButton && (
+                                    <button
+                                        onClick={handleBulkAssign}
+                                        disabled={!selectedTeacher || selectedSubjects.length === 0}
+                                        className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Assign to Teacher
+                                    </button>
+                                )}
                             </div>
                         </>
                     )}
