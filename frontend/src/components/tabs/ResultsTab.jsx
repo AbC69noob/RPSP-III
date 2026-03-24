@@ -29,7 +29,7 @@ const ResultsTab = () => {
         setInitialLoading(true);
         try {
             const [termsRes, programsRes, batchesRes, semsRes] = await Promise.all([
-                api.get('/terms'),
+                api.get('/cr-terms'),
                 api.get('/programs'),
                 api.get('/student-batches'),
                 api.get('/semesters')
@@ -57,7 +57,7 @@ const ResultsTab = () => {
                 params: {
                     programId: selectedProgramId,
                     semesterId: selectedSemesterId,
-                    termId: selectedTermId,
+                    crTermId: selectedTermId,
                     studentBatchId: selectedStudentBatchId
                 }
             });
@@ -147,7 +147,11 @@ const ResultsTab = () => {
                             onChange={(e) => setSelectedTermId(e.target.value)}
                         >
                             <option value="">Select Term</option>
-                            {terms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            {terms.map(t => (
+                                <option key={t.id} value={t.id}>
+                                    {t.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>

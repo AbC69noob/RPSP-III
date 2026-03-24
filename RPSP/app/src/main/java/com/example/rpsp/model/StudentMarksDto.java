@@ -10,7 +10,7 @@ public class StudentMarksDto {
     private String rollNo;
     private Map<String, Map<String, Double>> marks; // SubjectName -> Details
     private Double totalObtained;
-    private Double totalFullBody;
+    private Double totalFull;
 
     public String getStudentName() {
         return studentName;
@@ -18,6 +18,14 @@ public class StudentMarksDto {
 
     public String getRollNo() {
         return rollNo;
+    }
+
+    public Double getTotalObtained() {
+        return totalObtained;
+    }
+
+    public Double getTotalFull() {
+        return totalFull;
     }
 
     // Helper to convert Map to List for RecyclerView

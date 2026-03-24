@@ -23,6 +23,7 @@ import './TeacherDashboard.css';
 
 const TeacherDashboard = () => {
     const [terms, setTerms] = useState([]);
+    const [crTerms, setCrTerms] = useState([]);
     const [teacherAssignments, setTeacherAssignments] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -49,11 +50,13 @@ const TeacherDashboard = () => {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const [termsRes, profileRes] = await Promise.all([
+            const [termsRes, profileRes, crTermsRes] = await Promise.all([
                 api.get('/terms'),
-                api.get('/profile')
+                api.get('/profile'),
+                api.get('/cr-terms')
             ]);
             setTerms(termsRes.data);
+            setCrTerms(crTermsRes.data);
             setCurrentUser(profileRes.data);
             if (profileRes.data.teacherId) {
                 const assignRes = await api.get(`/teacher-subjects/teacher/${profileRes.data.teacherId}`);
@@ -80,11 +83,14 @@ const TeacherDashboard = () => {
         });
     };
 
-    const availableTerms = useMemo(() => getAvailableTerms(), [terms]);
+    const availableTerms = useMemo(() => crTerms, [crTerms]);
 
     const groupedAssignments = useMemo(() => {
         const groups = {};
         teacherAssignments.forEach(asm => {
+            // Defensive check: Skip assignments that are missing critical data
+            if (!asm.subject || !asm.studentProgram) return;
+
             const batchId = asm.subject?.courseBatch?.id || 'no-batch';
             const batchYear = asm.subject?.courseBatch?.startYear || 'Unknown Revision';
             const programId = asm.studentProgram?.id || 'no-program';
@@ -96,13 +102,36 @@ const TeacherDashboard = () => {
         return groups;
     }, [teacherAssignments]);
 
-    const handleSelectTerm = (term) => {
-        setSelectedTerm(term);
+    const handleSelectTerm = (masterTerm) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const hasActiveSession = terms.some(t => {
+            if (!t.crTerm || t.crTerm.id !== masterTerm.id) return false;
+            if (!t.startDate || !t.endDate) return false;
+            const start = new Date(t.startDate);
+            const end = new Date(t.endDate);
+            const extendedEnd = new Date(end);
+            extendedEnd.setDate(extendedEnd.getDate() + 15);
+            return today >= start && today <= extendedEnd;
+        });
+
+        if (!hasActiveSession) {
+            toast.error("Term not created. Please contact Administrator for exam window.");
+            return;
+        }
+
+        setSelectedTerm(masterTerm);
         setView('subject');
         window.scrollTo(0, 0);
     };
 
     const handleSubjectExpand = async (assignment) => {
+        if (!assignment || !assignment.subject) {
+            toast.error("Invalid assignment data");
+            return;
+        }
+
         if (expandedSubjectId === assignment.subject.id) {
             setExpandedSubjectId(null);
             return;
@@ -113,14 +142,15 @@ const TeacherDashboard = () => {
 
         setLoadingStudents(true);
         try {
+            const fetchParams = {
+                programId: assignment.studentProgram?.id,
+                semesterId: assignment.studentSemester?.id || assignment.studentSemester,
+                courseBatchId: assignment.subject?.courseBatch?.id
+            };
+            console.log('Fetching students with params:', fetchParams);
+
             const [studentsRes, marksRes] = await Promise.all([
-                api.get('/students/filter', {
-                    params: {
-                        programId: assignment.studentProgram.id,
-                        semester: assignment.studentSemester,
-                        courseBatchId: assignment.subject?.courseBatch?.id
-                    }
-                }),
+                api.get('/students/filter', { params: fetchParams }),
                 api.get('/marks')
             ]);
             const filteredStudents = studentsRes.data;
@@ -133,13 +163,14 @@ const TeacherDashboard = () => {
                     const existingMark = marksRes.data.find(m =>
                         m.student?.id === student.id &&
                         m.subject?.id === subjId &&
-                        m.term?.id === selectedTerm.id
+                        m.term?.crTerm?.id === selectedTerm.id
                     );
                     next[subjId][student.id] = existingMark ? {
                         obtainedMarks: existingMark.obtainedMarks,
                         remark: existingMark.remark || '',
-                        id: existingMark.id
-                    } : { obtainedMarks: '', remark: '', id: null };
+                        id: existingMark.id,
+                        publishStatus: existingMark.publishStatus
+                    } : { obtainedMarks: '', remark: '', id: null, publishStatus: false };
                 });
                 return next;
             });
@@ -175,8 +206,8 @@ const TeacherDashboard = () => {
             const payload = {
                 student: { id: student.id },
                 subject: { id: subjId },
-                term: { id: selectedTerm.id },
-                uploadedBy: { id: currentUser.id },
+                term: { crTerm: { id: selectedTerm.id } },
+                obtainedBy: { id: currentUser.id },
                 obtainedMarks: Number(entry.obtainedMarks),
                 remark: entry.remark,
                 uploadedAt: new Date().toISOString()
@@ -211,6 +242,8 @@ const TeacherDashboard = () => {
     };
 
     const renderAccordionSubject = (assignment) => {
+        if (!assignment || !assignment.subject) return null;
+
         const subject = assignment.subject;
         const isExpanded = expandedSubjectId === subject.id;
 
@@ -229,7 +262,9 @@ const TeacherDashboard = () => {
                             <div className={`flex items-center gap-3 text-xs mt-1 ${isExpanded ? 'text-indigo-100' : 'text-gray-500'}`}>
                                 <span className="font-bold uppercase tracking-widest">{subject.code}</span>
                                 <span>&bull;</span>
-                                <span className="font-bold uppercase tracking-widest">Sem {assignment.studentSemester}</span>
+                                <span className="font-bold uppercase tracking-widest">
+                                    Sem {assignment.studentSemester?.semesterNumber || assignment.studentSemester?.name || assignment.studentSemester || 'N/A'}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -257,10 +292,13 @@ const TeacherDashboard = () => {
 
         let savedCount = 0;
         let enteredCount = 0;
+        let isPublished = false;
+
         students.forEach(s => {
             const entry = currentEntrySet[s.id] || {};
             if (entry.id) savedCount++;
             if (entry.obtainedMarks !== '' && entry.obtainedMarks !== null) enteredCount++;
+            if (entry.publishStatus) isPublished = true;
         });
 
         return (
@@ -315,6 +353,7 @@ const TeacherDashboard = () => {
                                                     min="0"
                                                     step="0.01"
                                                     className="table-input"
+                                                    disabled={isPublished}
                                                     value={entry.obtainedMarks}
                                                     onChange={(e) => handleMarkChange(subject.id, student.id, 'obtainedMarks', e.target.value)}
                                                     placeholder="0.00"
@@ -324,6 +363,7 @@ const TeacherDashboard = () => {
                                                 <input
                                                     type="text"
                                                     className="table-input py-2 px-3 font-medium text-gray-600 border-none bg-gray-50 focus:bg-white"
+                                                    disabled={isPublished}
                                                     value={entry.remark}
                                                     onChange={(e) => handleMarkChange(subject.id, student.id, 'remark', e.target.value)}
                                                     placeholder="-"
@@ -342,11 +382,17 @@ const TeacherDashboard = () => {
                         </tbody>
                     </table>
                 </div>
-                {students.length > 0 && (
+                {students.length > 0 && !isPublished && (
                     <div className="flex justify-end pt-4">
                         <button className="btn-modern btn-primary px-8" onClick={() => handleSaveSubjectAll(subject.id)}>
                             <Save size={18} /> Update {subject.code}
                         </button>
+                    </div>
+                )}
+                {isPublished && (
+                    <div className="mt-4 p-4 bg-green-50 rounded-xl border border-green-200 flex items-center gap-3 text-green-700">
+                        <CheckCircle2 size={20} />
+                        <span className="font-bold">Results for this subject have been published. Editing is restricted.</span>
                     </div>
                 )}
             </div>
@@ -362,8 +408,6 @@ const TeacherDashboard = () => {
         );
     }
 
-    const savedCount = students.filter(s => marksEntry[s.id]?.id).length;
-    const enteredCount = students.filter(s => marksEntry[s.id]?.obtainedMarks !== '').length;
 
     return (
         <div className="td-wrapper">
@@ -531,10 +575,5 @@ const TeacherDashboard = () => {
         </div>
     );
 };
-
-// Helper outside component to avoid re-declaration
-function marksToSaveCount(students, marksEntry) {
-    return students.filter(s => marksEntry[s.id]?.obtainedMarks !== '' && marksEntry[s.id]?.obtainedMarks !== null).length;
-}
 
 export default TeacherDashboard;

@@ -13,14 +13,14 @@ public interface MarksRepository extends JpaRepository<Marks, Long> {
                 select m from Marks m
                 join m.student s
                 where s.program.id = :programId
-                  and s.semester.id = :semesterId
-                  and m.term.id = :termId
+                  and m.subject.semester.id = :semesterId
+                  and m.term.crTerm.id = :crTermId
                   and s.studentBatch.id = :studentBatchId
             """)
-    List<Marks> findByProgramSemesterTermBatch(
+    List<Marks> findByProgramSemesterCrTermBatch(
             @Param("programId") Long programId,
             @Param("semesterId") Long semesterId,
-            @Param("termId") Long termId,
+            @Param("crTermId") Long crTermId,
             @Param("studentBatchId") Long studentBatchId);
 
     // ✅ ADD THIS

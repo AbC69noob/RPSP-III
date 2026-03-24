@@ -12,6 +12,7 @@ import com.example.rpsp.api.ApiClient;
 import com.example.rpsp.api.ApiService;
 import java.util.HashMap;
 import java.util.Map;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -62,22 +63,22 @@ public class ChangePasswordActivity extends AppCompatActivity {
         body.put("userId", String.valueOf(userId));
         body.put("newPassword", newPass);
 
-        ApiClient.getService().changePassword(token, body).enqueue(new Callback<String>() {
+        ApiClient.getService().changePassword(token, body).enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<String> call, Response<String> response) {
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(ChangePasswordActivity.this, "Password changed!", Toast.LENGTH_SHORT).show();
 
-                    // Update requiresPasswordChange in prefs potentially, or just proceed
+                    // Navigate directly to Dashboard
                     startActivity(new Intent(ChangePasswordActivity.this, DashboardActivity.class));
                     finish();
                 } else {
-                    Toast.makeText(ChangePasswordActivity.this, "Failed to change password", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ChangePasswordActivity.this, "Failed to change password: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<String> call, Throwable t) {
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Toast.makeText(ChangePasswordActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

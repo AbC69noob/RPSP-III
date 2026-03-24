@@ -38,12 +38,12 @@ public class ResultActivity extends AppCompatActivity {
 
         rvMarks.setLayoutManager(new LinearLayoutManager(this));
 
-        int semester = getIntent().getIntExtra("semester", 1);
-        Long termId = getIntent().getLongExtra("termId", -1);
+        Long semesterId = getIntent().getLongExtra("semesterId", -1L);
+        Long termId = getIntent().getLongExtra("termId", -1L);
 
         String token = getSharedPreferences("app_prefs", MODE_PRIVATE).getString("token", "");
 
-        ApiClient.getService().getMyMarks(token, semester, termId).enqueue(new Callback<List<StudentMarksDto>>() {
+        ApiClient.getService().getMyMarks(token, semesterId, termId).enqueue(new Callback<List<StudentMarksDto>>() {
             @Override
             public void onResponse(Call<List<StudentMarksDto>> call, Response<List<StudentMarksDto>> response) {
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {

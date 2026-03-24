@@ -30,24 +30,24 @@ public class StudentsController {
     public ResponseEntity<List<Students>> getFilteredStudents(
             @RequestParam Long programId,
             @RequestParam Long semesterId,
-            @RequestParam(required = false) Long studentBatchId) {
+            @RequestParam(required = false) Long studentBatchId,
+            @RequestParam(required = false) Long courseBatchId) {
 
         // Validate required parameters
-        if (programId == null) {
-            throw new RuntimeException("Program ID parameter is required");
-        }
-        if (semesterId == null) {
-            throw new RuntimeException("Semester ID parameter is required");
+        if (programId == null || semesterId == null) {
+            return ResponseEntity.badRequest().build();
         }
 
         List<Students> students;
         if (studentBatchId != null) {
             students = repo.findByProgramIdAndSemesterIdAndStudentBatchId(programId, semesterId, studentBatchId);
+        } else if (courseBatchId != null) {
+            students = repo.findByProgramIdAndSemesterIdAndStudentBatchCourseBatchId(programId, semesterId, courseBatchId);
         } else {
             students = repo.findByProgramIdAndSemesterId(programId, semesterId);
         }
 
-        System.out.println("Found " + students.size() + " students matching criteria");
+        System.out.println("Found " + students.size() + " students for Program: " + programId + ", Sem: " + semesterId + ", Batch: " + (studentBatchId != null ? studentBatchId : courseBatchId));
 
         return ResponseEntity.ok(students);
     }

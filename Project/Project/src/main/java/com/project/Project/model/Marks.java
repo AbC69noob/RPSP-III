@@ -25,7 +25,7 @@ public class Marks {
     private Terms term;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "uploader_id")
     private Users uploadedBy;
 
     @Column(precision = 5, scale = 2)

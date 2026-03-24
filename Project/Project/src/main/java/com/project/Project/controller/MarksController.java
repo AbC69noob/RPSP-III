@@ -51,7 +51,7 @@ public class MarksController {
     @GetMapping("/my-marks")
     public List<StudentMarksDto> getMyMarks(
             @RequestParam Long semesterId,
-            @RequestParam Long termId) {
+            @RequestParam Long crTermId) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
@@ -59,10 +59,10 @@ public class MarksController {
         Students student = studentRepo.findByUserUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Student profile not found for user: " + username));
 
-        List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(
+        List<Marks> marksList = marksRepo.findByProgramSemesterCrTermBatch(
                 student.getProgram().getId(),
                 semesterId,
-                termId,
+                crTermId,
                 student.getStudentBatch().getId());
 
         // Filter for THIS student only (Repo method returns whole batch)
@@ -94,9 +94,9 @@ public class MarksController {
     public List<StudentMarksDto> searchMarks(
             @RequestParam Long programId,
             @RequestParam Long semesterId,
-            @RequestParam Long termId,
+            @RequestParam Long crTermId,
             @RequestParam Long studentBatchId) {
-        List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(programId, semesterId, termId, studentBatchId);
+        List<Marks> marksList = marksRepo.findByProgramSemesterCrTermBatch(programId, semesterId, crTermId, studentBatchId);
 
         // Map studentId -> DTO
         Map<Long, StudentMarksDto> studentMap = new HashMap<>();
@@ -139,20 +139,37 @@ public class MarksController {
             if (marks.getSubject() == null || marks.getSubject().getId() == null)
                 throw new IllegalArgumentException("Subject ID must not be null");
 
-            if (marks.getTerm() == null || marks.getTerm().getId() == null)
-                throw new IllegalArgumentException("Term ID must not be null");
+            if (marks.getTerm() == null || (marks.getTerm().getId() == null && (marks.getTerm().getCrTerm() == null || marks.getTerm().getCrTerm().getId() == null)))
+                throw new IllegalArgumentException("Term ID or Master Term ID must not be null");
 
             if (marks.getObtainedMarks() == null)
                 throw new IllegalArgumentException("Obtained marks must not be null");
+
+            Terms term = null;
+            if (marks.getTerm().getId() != null) {
+                term = termRepo.findById(marks.getTerm().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Term not found"));
+            } else {
+                // Resolve CrTerm to Active Term
+                Long crTermId = marks.getTerm().getCrTerm().getId();
+                java.util.Date now = new java.util.Date();
+                List<Terms> potentialTerms = termRepo.findAll().stream()
+                        .filter(t -> t.getCrTerm() != null && t.getCrTerm().getId().equals(crTermId))
+                        .filter(t -> t.getStartDate() != null && t.getEndDate() != null)
+                        .filter(t -> !now.before(t.getStartDate()) && !now.after(t.getEndDate()))
+                        .toList();
+                
+                if (potentialTerms.isEmpty()) {
+                    throw new IllegalArgumentException("No active specific Term found for Master Term ID: " + crTermId + ". Please create an active session window for this term.");
+                }
+                term = potentialTerms.get(0);
+            }
 
             Students student = studentRepo.findById(marks.getStudent().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Student not found"));
 
             Subjects subject = subjectRepo.findById(marks.getSubject().getId())
                     .orElseThrow(() -> new IllegalArgumentException("Subject not found"));
-
-            Terms term = termRepo.findById(marks.getTerm().getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Term not found"));
 
             // Check if existing mark is already published. We shouldn't update if published.
             marksRepo.findById(marks.getId() != null ? marks.getId() : -1L).ifPresent(existingMark -> {
@@ -186,10 +203,10 @@ public class MarksController {
     public org.springframework.http.ResponseEntity<?> publishMarks(
             @RequestParam Long programId,
             @RequestParam Long semesterId,
-            @RequestParam Long termId,
+            @RequestParam Long crTermId,
             @RequestParam Long studentBatchId) {
         
-        List<Marks> marksList = marksRepo.findByProgramSemesterTermBatch(programId, semesterId, termId, studentBatchId);
+        List<Marks> marksList = marksRepo.findByProgramSemesterCrTermBatch(programId, semesterId, crTermId, studentBatchId);
         if (marksList.isEmpty()) {
              return org.springframework.http.ResponseEntity.badRequest().body("No marks found to publish for the given criteria.");
         }
@@ -200,5 +217,26 @@ public class MarksController {
         
         marksRepo.saveAll(marksList);
         return org.springframework.http.ResponseEntity.ok("Successfully published " + marksList.size() + " marks.");
+    }
+
+    @PutMapping("/unpublish")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('admin')")
+    public org.springframework.http.ResponseEntity<?> unpublishMarks(
+            @RequestParam Long programId,
+            @RequestParam Long semesterId,
+            @RequestParam Long crTermId,
+            @RequestParam Long studentBatchId) {
+        
+        List<Marks> marksList = marksRepo.findByProgramSemesterCrTermBatch(programId, semesterId, crTermId, studentBatchId);
+        if (marksList.isEmpty()) {
+             return org.springframework.http.ResponseEntity.badRequest().body("No marks found to unpublish for the given criteria.");
+        }
+
+        for (Marks m : marksList) {
+            m.setPublishStatus(false);
+        }
+        
+        marksRepo.saveAll(marksList);
+        return org.springframework.http.ResponseEntity.ok("Successfully unpublished " + marksList.size() + " marks.");
     }
 }

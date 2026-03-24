@@ -21,10 +21,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.rpsp.R;
 import com.example.rpsp.api.ApiClient;
 import com.example.rpsp.api.ApiService;
+import com.example.rpsp.model.CrTerm;
 import com.example.rpsp.model.ProfileDto;
+import com.example.rpsp.model.Semester;
 import com.example.rpsp.model.StudentDetailsDto;
 import com.example.rpsp.model.StudentMarksDto;
-import com.example.rpsp.model.Term;
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -74,7 +75,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         apiService = ApiClient.getService();
 
-        setupSemesters();
+        fetchSemesters();
         fetchTerms();
         fetchProfile();
 
@@ -111,21 +112,32 @@ public class DashboardActivity extends AppCompatActivity {
         });
     }
 
-    private void setupSemesters() {
-        List<Integer> semesters = new ArrayList<>();
-        for (int i = 1; i <= 8; i++)
-            semesters.add(i);
-        ArrayAdapter<Integer> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
-                semesters);
-        spinnerSemester.setAdapter(adapter);
+    private void fetchSemesters() {
+        apiService.getSemesters(token).enqueue(new Callback<List<Semester>>() {
+            @Override
+            public void onResponse(Call<List<Semester>> call, Response<List<Semester>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ArrayAdapter<Semester> adapter = new ArrayAdapter<>(DashboardActivity.this,
+                            android.R.layout.simple_spinner_dropdown_item, response.body());
+                    spinnerSemester.setAdapter(adapter);
+                } else {
+                    Toast.makeText(DashboardActivity.this, "Failed to load semesters", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Semester>> call, Throwable t) {
+                Toast.makeText(DashboardActivity.this, "Semester Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void fetchTerms() {
-        apiService.getTerms(token).enqueue(new Callback<List<Term>>() {
+        apiService.getCrTerms(token).enqueue(new Callback<List<CrTerm>>() {
             @Override
-            public void onResponse(Call<List<Term>> call, Response<List<Term>> response) {
+            public void onResponse(Call<List<CrTerm>> call, Response<List<CrTerm>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    ArrayAdapter<Term> adapter = new ArrayAdapter<>(DashboardActivity.this,
+                    ArrayAdapter<CrTerm> adapter = new ArrayAdapter<>(DashboardActivity.this,
                             android.R.layout.simple_spinner_dropdown_item, response.body());
                     spinnerTerm.setAdapter(adapter);
                 } else {
@@ -134,15 +146,15 @@ public class DashboardActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<List<Term>> call, Throwable t) {
+            public void onFailure(Call<List<CrTerm>> call, Throwable t) {
                 Toast.makeText(DashboardActivity.this, "Term Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void fetchResults() {
-        Integer semester = (Integer) spinnerSemester.getSelectedItem();
-        Term term = (Term) spinnerTerm.getSelectedItem();
+        Semester semester = (Semester) spinnerSemester.getSelectedItem();
+        CrTerm term = (CrTerm) spinnerTerm.getSelectedItem();
 
         if (semester == null || term == null) {
             Toast.makeText(this, "Please select semester and term", Toast.LENGTH_SHORT).show();
@@ -153,7 +165,7 @@ public class DashboardActivity extends AppCompatActivity {
         rvMarks.setAdapter(null); // Clear previous results
         layoutSummary.setVisibility(View.GONE);
 
-        apiService.getMyMarks(token, semester, term.getId()).enqueue(new Callback<List<StudentMarksDto>>() {
+        apiService.getMyMarks(token, semester.getId(), term.getId()).enqueue(new Callback<List<StudentMarksDto>>() {
             @Override
             public void onResponse(Call<List<StudentMarksDto>> call, Response<List<StudentMarksDto>> response) {
                 progressBar.setVisibility(View.GONE);
@@ -170,7 +182,7 @@ public class DashboardActivity extends AppCompatActivity {
                                 .show();
                     }
                 } else {
-                    Toast.makeText(DashboardActivity.this, "No results found", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(DashboardActivity.this, "No results found. Are they published?", Toast.LENGTH_SHORT).show();
                 }
             }
 

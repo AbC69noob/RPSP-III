@@ -26,6 +26,7 @@ const MarksTab = () => {
     const [programs, setPrograms] = useState([]);
     const [studentBatches, setStudentBatches] = useState([]);
     const [semesters, setSemesters] = useState([]);
+    const [crTerms, setCrTerms] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -45,8 +46,6 @@ const MarksTab = () => {
 
     // Multi-subject state: { [subjectId]: { [studentId]: { obtainedMarks, remark, id } } }
     const [marksEntry, setMarksEntry] = useState({});
-
-    // const semesters = [1, 2, 3, 4, 5, 6, 7, 8]; // Removed hardcoded semesters
 
     // Grouping logic for teacher assignments
     const groupedAssignments = useMemo(() => {
@@ -69,18 +68,8 @@ const MarksTab = () => {
     }, [teacherAssignments]);
 
     const availableTerms = useMemo(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        return terms.filter(term => {
-            if (!term.startDate || !term.endDate) return true;
-            const start = new Date(term.startDate);
-            const end = new Date(term.endDate);
-            const extendedEnd = new Date(end);
-            extendedEnd.setDate(extendedEnd.getDate() + 15);
-            return today >= start && today <= extendedEnd;
-        });
-    }, [terms]);
+        return crTerms;
+    }, [crTerms]);
 
     useEffect(() => {
         fetchInitialData();
@@ -98,19 +87,21 @@ const MarksTab = () => {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const [marksRes, studentsRes, termsRes, programsRes, profileRes, batchesRes, semsRes] = await Promise.all([
+            const [marksRes, studentsRes, termsRes, programsRes, profileRes, batchesRes, semsRes, crTermsRes] = await Promise.all([
                 api.get('/marks'),
                 api.get('/students'),
                 api.get('/terms'),
                 api.get('/programs'),
                 api.get('/profile'),
                 api.get('/student-batches'),
-                api.get('/semesters')
+                api.get('/semesters'),
+                api.get('/cr-terms')
             ]);
             setMarks(marksRes.data);
             setAllStudents(studentsRes.data);
             setTerms(termsRes.data);
             setPrograms(programsRes.data);
+            setCrTerms(crTermsRes.data);
             setCurrentUser(profileRes.data);
             setStudentBatches(batchesRes.data);
             setSemesters(semsRes.data.sort((a, b) => a.semesterNumber - b.semesterNumber));
@@ -148,6 +139,24 @@ const MarksTab = () => {
     const handleApplyFilters = async () => {
         if (!selectedStudentBatchId || !selectedProgramId || !selectedSemesterId || !selectedTermId) {
             toast.warning('Complete filters first');
+            return;
+        }
+
+        // Check for active specific term session
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const hasActiveSession = terms.some(t => {
+            if (!t.crTerm || t.crTerm.id !== Number(selectedTermId)) return false;
+            if (!t.startDate || !t.endDate) return false;
+            const start = new Date(t.startDate);
+            const end = new Date(t.endDate);
+            const extendedEnd = new Date(end);
+            extendedEnd.setDate(extendedEnd.getDate() + 15);
+            return today >= start && today <= extendedEnd;
+        });
+
+        if (!hasActiveSession) {
+            toast.error("Term not created. Please contact Administrator to create an active exam window.");
             return;
         }
 
@@ -221,12 +230,12 @@ const MarksTab = () => {
 
         const marksToSave = students.map(student => {
             const entry = entryGroup[student.id];
-            if (entry.obtainedMarks === '' || entry.obtainedMarks === null) return null;
+            if (!entry || entry.obtainedMarks === '' || entry.obtainedMarks === null) return null;
 
             const payload = {
                 student: { id: student.id },
                 subject: { id: Number(subjectId) },
-                term: { id: Number(selectedTermId) },
+                term: { crTerm: { id: Number(selectedTermId) } },
                 obtainedMarks: Number(entry.obtainedMarks),
                 remark: entry.remark,
             };
@@ -252,7 +261,7 @@ const MarksTab = () => {
                     const match = refresh.data.find(m =>
                         m.student?.id === s.id &&
                         m.subject?.id === Number(subjectId) &&
-                        m.term?.id === Number(selectedTermId)
+                        m.term?.crTerm?.id === Number(selectedTermId)
                     );
                     if (match && updated[subjectId][s.id]) {
                         updated[subjectId][s.id].id = match.id;
@@ -262,6 +271,34 @@ const MarksTab = () => {
             });
         } catch (error) {
             toast.error('Sync failed');
+        }
+    };
+
+    const handlePublishToggle = async (publish) => {
+        if (!selectedStudentBatchId || !selectedProgramId || !selectedSemesterId || !selectedTermId) {
+            toast.warning('Complete filters first');
+            return;
+        }
+
+        const endpoint = publish ? '/marks/publish' : '/marks/unpublish';
+        try {
+            await api.put(endpoint, null, {
+                params: {
+                    programId: Number(selectedProgramId),
+                    semesterId: Number(selectedSemesterId),
+                    termId: Number(selectedTermId),
+                    studentBatchId: Number(selectedStudentBatchId)
+                }
+            });
+            toast.success(publish ? 'Results published successfully!' : 'Results unpublished.');
+            // Refresh marks after publish/unpublish
+            const refresh = await api.get('/marks');
+            setMarks(refresh.data);
+            // Also refresh marksEntry to update visibility of status
+            handleApplyFilters();
+        } catch (error) {
+            console.error('Failed to toggle publish status:', error);
+            toast.error(error.response?.data || 'Operation failed');
         }
     };
 
@@ -298,7 +335,7 @@ const MarksTab = () => {
                     const existing = marks.find(m =>
                         m.student?.id === s.id &&
                         m.subject?.id === subjId &&
-                        m.term?.id === Number(selectedTermId)
+                        m.term?.crTerm?.id === Number(selectedTermId)
                     );
                     next[subjId][s.id] = existing ? {
                         obtainedMarks: existing.obtainedMarks,
@@ -413,6 +450,11 @@ const MarksTab = () => {
                                                     {entry.id ? <CheckCircle2 size={12} /> : <div className="w-1.5 h-1.5 rounded-full bg-current" />}
                                                     <span className="text-[9px] font-black uppercase tracking-wider">{entry.id ? 'Saved' : 'Unsaved'}</span>
                                                 </div>
+                                                {entry.id && (
+                                                    <div className={`mt-1 text-[8px] font-bold uppercase tracking-widest ${marks.find(m => m.id === entry.id)?.publishStatus ? 'text-green-600' : 'text-amber-500'}`}>
+                                                        {marks.find(m => m.id === entry.id)?.publishStatus ? 'Published' : 'Draft'}
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     );
@@ -477,7 +519,11 @@ const MarksTab = () => {
                             <label>Examination Term</label>
                             <select className="modern-select" value={selectedTermId} onChange={(e) => setSelectedTermId(e.target.value)}>
                                 <option value="">Select Term</option>
-                                {availableTerms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                {availableTerms.map(t => (
+                                    <option key={t.id} value={t.id}>
+                                        {t.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -486,6 +532,16 @@ const MarksTab = () => {
                             <RefreshCcw size={18} /> Submit
                         </button>
                         {filtersApplied && <button className="btn-modern btn-secondary" onClick={() => { setFiltersApplied(false); setExpandedSubjectId(null); }}>Reset</button>}
+                        {filtersApplied && (
+                            <div className="flex gap-2 ml-auto">
+                                <button className="btn-modern bg-green-600 text-white hover:bg-green-700" onClick={() => handlePublishToggle(true)}>
+                                    <CheckCircle2 size={18} /> Publish Results
+                                </button>
+                                <button className="btn-modern bg-amber-600 text-white hover:bg-amber-700" onClick={() => handlePublishToggle(false)}>
+                                    <RefreshCcw size={18} /> Unpublish
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -503,7 +559,11 @@ const MarksTab = () => {
                         </div>
                         <select className="modern-select border-indigo-200" style={{ minWidth: '240px' }} value={selectedTermId} onChange={(e) => { setSelectedTermId(e.target.value); setExpandedSubjectId(null); }}>
                             <option value="">Select Evaluation Term</option>
-                            {availableTerms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            {availableTerms.map(t => (
+                                <option key={t.id} value={t.id}>
+                                    {t.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
