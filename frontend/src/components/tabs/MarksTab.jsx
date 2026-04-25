@@ -286,7 +286,7 @@ const MarksTab = () => {
                 params: {
                     programId: Number(selectedProgramId),
                     semesterId: Number(selectedSemesterId),
-                    termId: Number(selectedTermId),
+                    crTermId: Number(selectedTermId),
                     studentBatchId: Number(selectedStudentBatchId)
                 }
             });
