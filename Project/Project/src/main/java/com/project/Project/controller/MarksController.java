@@ -203,10 +203,26 @@ public class MarksController {
     public org.springframework.http.ResponseEntity<?> publishMarks(
             @RequestParam Long programId,
             @RequestParam Long semesterId,
-            @RequestParam Long crTermId,
+            @RequestParam(required = false) Long crTermId,
+            @RequestParam(required = false, name = "termId") Long termId,
             @RequestParam Long studentBatchId) {
         
-        List<Marks> marksList = marksRepo.findByProgramSemesterCrTermBatch(programId, semesterId, crTermId, studentBatchId);
+        Long resolvedCrTermId = crTermId;
+        if (resolvedCrTermId == null) {
+            if (termId == null) {
+                return org.springframework.http.ResponseEntity.badRequest()
+                        .body("crTermId (or termId) is required.");
+            }
+            Terms term = termRepo.findById(termId)
+                    .orElseThrow(() -> new IllegalArgumentException("Term not found"));
+            if (term.getCrTerm() == null || term.getCrTerm().getId() == null) {
+                return org.springframework.http.ResponseEntity.badRequest()
+                        .body("Provided termId is not linked to a master term.");
+            }
+            resolvedCrTermId = term.getCrTerm().getId();
+        }
+
+        List<Marks> marksList = marksRepo.findByProgramSemesterCrTermBatch(programId, semesterId, resolvedCrTermId, studentBatchId);
         if (marksList.isEmpty()) {
              return org.springframework.http.ResponseEntity.badRequest().body("No marks found to publish for the given criteria.");
         }
@@ -224,10 +240,26 @@ public class MarksController {
     public org.springframework.http.ResponseEntity<?> unpublishMarks(
             @RequestParam Long programId,
             @RequestParam Long semesterId,
-            @RequestParam Long crTermId,
+            @RequestParam(required = false) Long crTermId,
+            @RequestParam(required = false, name = "termId") Long termId,
             @RequestParam Long studentBatchId) {
         
-        List<Marks> marksList = marksRepo.findByProgramSemesterCrTermBatch(programId, semesterId, crTermId, studentBatchId);
+        Long resolvedCrTermId = crTermId;
+        if (resolvedCrTermId == null) {
+            if (termId == null) {
+                return org.springframework.http.ResponseEntity.badRequest()
+                        .body("crTermId (or termId) is required.");
+            }
+            Terms term = termRepo.findById(termId)
+                    .orElseThrow(() -> new IllegalArgumentException("Term not found"));
+            if (term.getCrTerm() == null || term.getCrTerm().getId() == null) {
+                return org.springframework.http.ResponseEntity.badRequest()
+                        .body("Provided termId is not linked to a master term.");
+            }
+            resolvedCrTermId = term.getCrTerm().getId();
+        }
+
+        List<Marks> marksList = marksRepo.findByProgramSemesterCrTermBatch(programId, semesterId, resolvedCrTermId, studentBatchId);
         if (marksList.isEmpty()) {
              return org.springframework.http.ResponseEntity.badRequest().body("No marks found to unpublish for the given criteria.");
         }

@@ -182,7 +182,7 @@ const MarksTab = () => {
                     const existing = marks.find(m =>
                         m.student?.id === student.id &&
                         m.subject?.id === subject.id &&
-                        m.term?.id === Number(selectedTermId)
+                        m.term?.crTerm?.id === Number(selectedTermId)
                     );
                     initialEntry[subject.id][student.id] = existing ? {
                         obtainedMarks: existing.obtainedMarks,
