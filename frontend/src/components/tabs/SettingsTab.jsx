@@ -168,9 +168,15 @@ const SettingsTab = () => {
                                         required
                                     >
                                         <option value="">Select a Course Batch</option>
-                                        {courseBatches.map(cb => (
-                                            <option key={cb.id} value={cb.id}>{cb.name}</option>
-                                        ))}
+                                        {courseBatches.map(cb => {
+                                            const label = cb.startYear
+                                                ? `Revised on ${cb.startYear}${cb.description ? ` - ${cb.description}` : ''}`
+                                                : (cb.description || 'Course Batch');
+
+                                            return (
+                                                <option key={cb.id} value={cb.id}>{label}</option>
+                                            );
+                                        })}
                                     </select>
                                 </div>
                                 <div className="pt-2">
